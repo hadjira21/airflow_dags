@@ -1,7 +1,7 @@
 from airflow import DAG
 from datetime import datetime
 from airflow.utils.dates import days_ago
-from repo.dags.operators.eco2mix_operator import Eco2mixDownloadOperator
+from dags.operators.eco2mix_operator import Eco2mixDownloadOperator
 
 default_args = {
     "owner": "airflow",
