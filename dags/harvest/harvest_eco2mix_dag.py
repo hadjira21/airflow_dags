@@ -1,6 +1,6 @@
 from airflow import DAG
 from datetime import datetime
-from dags.operators.eco2mix_operator import Eco2mixOperator
+from ..operators.eco2mix_operator import Eco2mixOperator
 
 default_args = {
     'start_date': datetime(2023, 1, 1),
