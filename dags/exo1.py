@@ -6,7 +6,7 @@ import subprocess
 import zipfile
 import pandas as pd 
 
-# Définition du dossier de stockage
+# Définition du dossier de stockag
 DATA_DIR = "/opt/airflow/data"
 ZIP_FILE = os.path.join(DATA_DIR, "eCO2mix_RTE_En-cours-TR.zip")
 EXTRACTED_DIR = os.path.join(DATA_DIR, "eCO2mix_RTE_En-cours-TR")
