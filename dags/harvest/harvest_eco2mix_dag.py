@@ -1,26 +1,26 @@
 from airflow import DAG
 from datetime import datetime
-from dags.operators.eco2mix_operator import Eco2mixOperator
+from airflow.utils.dates import days_ago
+from eco2mix_operator import Eco2mixDownloadOperator
 
 default_args = {
-    'start_date': datetime(2023, 1, 1),
-    'retries': 1,
+    "owner": "airflow",
+    "start_date": days_ago(1)
 }
 
 with DAG(
-    dag_id='harvest_eco2mix_dag',
+    dag_id="eco2mix_data_pipeline",
     default_args=default_args,
-    schedule_interval=None,  # Déclenchement manuel
+    schedule_interval=None,
     catchup=False,
-    tags=['eco2mix']
+    description="Téléchargement des données Eco2mix via opérateur personnalisé"
 ) as dag:
 
-    download_data = Eco2mixOperator(
-        task_id='download_eco2mix_data',
-        url="https://eco2mix.rte-france.com/download/eco2mix-national-tr.csv.zip", 
-        output_path='/opt/airflow/data/eco2mix',
-        start_date='2023-01-01',
-        end_date='2023-12-31',
+    download_data = Eco2mixDownloadOperator(
+        task_id="download_eco2mix_data",
+        output_path="/opt/airflow/data/eco2mix_data.csv",
+        start_date="2023-01-01",
+        end_date="2023-12-31"
     )
 
     download_data
