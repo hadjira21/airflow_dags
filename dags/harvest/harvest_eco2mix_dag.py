@@ -1,6 +1,13 @@
 from airflow import DAG
 from datetime import datetime
 from airflow.utils.dates import days_ago
+import sys
+import os
+
+# Ajouter le dossier operators au PYTHONPATH
+current_dir = os.path.dirname(os.path.abspath(__file__))
+operators_dir = os.path.join(current_dir, "..", "operators")
+sys.path.append(os.path.abspath(operators_dir))
 from eco2mix_operator import Eco2mixDownloadOperator
 
 default_args = {
