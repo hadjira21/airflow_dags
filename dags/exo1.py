@@ -5,6 +5,7 @@ import os
 import subprocess
 import zipfile
 import pandas as pd 
+from dags.operators.eco2mix_operator import Eco2mixDownloadOperator
 
 # Définition du dossier de stockag
 DATA_DIR = "/opt/airflow/data"
