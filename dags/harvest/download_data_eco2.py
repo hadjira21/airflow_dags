@@ -101,7 +101,7 @@ csv_file_path = os.path.join(EXTRACTED_DIR, "eCO2mix_RTE_En-cours-TR.csv")
 
 # Définition des tâches
 download_task = PythonOperator(
-    task_id="download_data",
+    task_id="download_data_eco2",
     python_callable=download_data,
     dag=dag,
 )
