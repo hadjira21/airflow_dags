@@ -40,7 +40,7 @@ default_args = {
 }
 
 dag = DAG(
-    "download_and_process_meteo_gz_csv_data",
+    "download_meteo_gz_csv_data",
     default_args=default_args,
     schedule_interval="@daily",
     catchup=False,
