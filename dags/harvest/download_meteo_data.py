@@ -8,6 +8,7 @@ import pandas as pd
 # Dossier de travail
 DATA_DIR = "/opt/airflow/data"
 GZ_FILE = os.path.join(DATA_DIR, "meteo.csv.gz")
+CSV_FILE = os.path.join(DATA_DIR, "meteo.csv")  # Fichier décompressé
 
 def download_data():
     """Télécharge un fichier .csv.gz depuis une URL."""
@@ -21,17 +22,34 @@ def download_data():
     else:
         raise Exception(f"Erreur lors du téléchargement : {result.stderr}")
 
-def read_data():
-    """Lit un fichier CSV compressé (.gz) et affiche un aperçu."""
+def decompress_file():
+    """Décompresse le fichier .csv.gz."""
     if not os.path.exists(GZ_FILE):
         raise FileNotFoundError(f"Le fichier .gz n'existe pas : {GZ_FILE}")
 
     try:
-        df = pd.read_csv(GZ_FILE, compression='gzip', encoding='ISO-8859-1', delimiter=';')
+        with gzip.open(GZ_FILE, 'rb') as f_in:
+            with open(CSV_FILE, 'wb') as f_out:
+                shutil.copyfileobj(f_in, f_out)
+        print(f"Fichier décompressé avec succès : {CSV_FILE}")
+    except Exception as e:
+        raise Exception(f"Erreur lors de la décompression du fichier .gz : {e}")
+
+
+
+
+def read_data():
+    """Lit le fichier CSV décompressé et affiche un aperçu."""
+    if not os.path.exists(CSV_FILE):
+        raise FileNotFoundError(f"Le fichier CSV n'existe pas : {CSV_FILE}")
+
+    try:
+        df = pd.read_csv(CSV_FILE, encoding='ISO-8859-1', delimiter=';')
         print("Aperçu des données :")
         print(df.head())
     except Exception as e:
-        print(f"Erreur lors de la lecture du fichier .gz : {e}")
+        print(f"Erreur lors de la lecture du fichier CSV : {e}")
+
 
 default_args = {
     "owner": "airflow",
@@ -40,7 +58,7 @@ default_args = {
 }
 
 dag = DAG(
-    "download_and_process_meteo_gz_csv_data",
+    "download_meteo_gz_csv_data",
     default_args=default_args,
     schedule_interval="@daily",
     catchup=False,
@@ -58,4 +76,4 @@ read_task = PythonOperator(
     dag=dag,
 )
 
-download_task >> read_task
+download_task >> decompress_task >> read_task
