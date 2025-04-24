@@ -12,9 +12,8 @@ def upload_to_snowflake():
         'password' : '42XCDpmzwMKxRww',
         'account': 'OKVCAFF-IE00559', # Compte Snowflake
         'warehouse': 'COMPUTE_WH', # Entrepôt Snowflake
-        'role' : "ACCOUNTADMIN",
         'database': 'BRONZE', # Base de données
-        'schema': "ENEDIS"        # Schéma
+        'schema': "ENEDIS"      
     }
 
     # Lire le fichier CSV avec pandas
