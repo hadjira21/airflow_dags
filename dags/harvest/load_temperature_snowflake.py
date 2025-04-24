@@ -31,12 +31,20 @@ def upload_to_snowflake():
     snowflake_hook.run(f"USE DATABASE {conn_params['database']}")
     snowflake_hook.run(f"USE SCHEMA {conn_params['schema']}")
 
-    # Créer la table si elle n'existe pas
+   # Créer la table si elle n'existe pas
     create_table_sql = """
-    CREATE TABLE IF NOT EXISTS temperature_data (
-    Horodate, Température réalisée lissée (°C), Température normale lissée (°C), Température réalisée lissée - Température normale lissée (°C), Pseudo rayonnement (%), Année, Mois, Jour, Année-Mois-Jour
-
+    CREATE TABLE IF NOT EXISTS eco2mix_data (
+        Horodate STRING,
+        Temp_realisee_lissee_C FLOAT,
+        Temp_normale_lissee_C FLOAT,
+        Diff_Temp_Realisee_Normale_C FLOAT,
+        Pseudo_rayonnement FLOAT,
+        Annee INT,
+        Mois INT,
+        Jour INT,
+        Annee_Mois_Jour STRING
     );
+
     """
     snowflake_hook.run(create_table_sql)
 
