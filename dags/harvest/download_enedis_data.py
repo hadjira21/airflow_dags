@@ -2,38 +2,37 @@ from airflow import DAG
 from airflow.operators.python import PythonOperator
 from datetime import datetime
 import os
-import requests
+import subprocess
 import pandas as pd
 
-# Constantes
-DATA_DIR = "/opt/airflow/data/enedis"
-CSV_PATH = os.path.join(DATA_DIR, "consommation_commune.csv")
-DATASET_ID = "consommation-elec-gaz-commune"  # ID du dataset sur data.enedis.fr
-API_URL = f"https://data.enedis.fr/api/records/1.0/search/?dataset=consommation-elec-gaz-commune&rows=10"
+# Dossier de travail
+DATA_DIR = "/opt/airflow/data"
+GZ_FILE = os.path.join(DATA_DIR, "meteo.csv.gz")
 
-# Fonctions
-def download_enedis_data():
+def download_data():
+    """Télécharge un fichier .csv.gz depuis une URL."""
     os.makedirs(DATA_DIR, exist_ok=True)
-    response = requests.get(API_URL)
+    url = "https://www.data.gouv.fr/fr/datasets/r/c1265c02-3a8e-4a28-961e-26b2fd704fe8"  
+    command = ["curl", "-L", "-o", GZ_FILE, url]
+    result = subprocess.run(command, capture_output=True, text=True)
 
-    if response.status_code == 200:
-        data = response.json()
-        records = [record["fields"] for record in data["records"]]
-        df = pd.DataFrame.from_records(records)
-        df.to_csv(CSV_PATH, index=False)
-        print(f"Fichier CSV sauvegardé à : {CSV_PATH}")
+    if result.returncode == 0:
+        print(f"Fichier téléchargé avec succès : {GZ_FILE}")
     else:
-        raise Exception(f"Erreur API Enedis : {response.status_code} - {response.text}")
+        raise Exception(f"Erreur lors du téléchargement : {result.stderr}")
 
-def read_csv_data():
-    if not os.path.exists(CSV_PATH):
-        raise FileNotFoundError(f"Le fichier CSV est introuvable : {CSV_PATH}")
-    
-    df = pd.read_csv(CSV_PATH)
-    print("Aperçu des données :")
-    print(df.head())
+def read_data():
+    """Lit un fichier CSV compressé (.gz) et affiche un aperçu."""
+    if not os.path.exists(GZ_FILE):
+        raise FileNotFoundError(f"Le fichier .gz n'existe pas : {GZ_FILE}")
 
-# DAG Definition
+    try:
+        df = pd.read_csv(GZ_FILE, compression='gzip', encoding='ISO-8859-1', delimiter=';')
+        print("Aperçu des données :")
+        print(df.head())
+    except Exception as e:
+        print(f"Erreur lors de la lecture du fichier .gz : {e}")
+
 default_args = {
     "owner": "airflow",
     "start_date": datetime(2025, 3, 20),
@@ -41,22 +40,23 @@ default_args = {
 }
 
 dag = DAG(
-    "download_enedis_data",
+    "download_and_process_meteo_gz_csv_data",
     default_args=default_args,
     schedule_interval="@daily",
     catchup=False,
 )
 
 download_task = PythonOperator(
-    task_id="download_enedis_data",
-    python_callable=download_enedis_data,
+    task_id="download_gz_csv",
+    python_callable=download_data,
     dag=dag,
 )
 
 read_task = PythonOperator(
-    task_id="read_enedis_data",
-    python_callable=read_csv_data,
+    task_id="read_gz_csv",
+    python_callable=read_data,
     dag=dag,
 )
 
 download_task >> read_task
+
