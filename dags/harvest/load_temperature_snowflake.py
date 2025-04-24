@@ -23,7 +23,7 @@ def upload_to_snowflake():
     
     # Connexion à Snowflake
     snowflake_hook = SnowflakeHook(
-        snowflake_conn_id='snowflake', 
+        snowflake_conn_id='snowflake_conn', 
         **conn_params  # Ajouter les paramètres de connexion
     )
 
@@ -61,7 +61,7 @@ def upload_to_snowflake():
 
 # Définir le DAG Airflow
 dag = DAG(
-    'upload_temperature_radiation_to_snowflake',
+    'upload_temperature_to_snowflake',
     description='DAG pour uploader les données de température et de rayonnement dans Snowflake',
     schedule_interval=None,  # Ce DAG ne sera pas planifié, il sera exécuté manuellement
     start_date=datetime(2025, 4, 24),
@@ -74,6 +74,4 @@ upload_task = PythonOperator(
     python_callable=upload_to_snowflake,
     dag=dag
 )
-
-# Assurer que la tâche d'upload s'exécute
 upload_task
