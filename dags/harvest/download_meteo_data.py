@@ -1,3 +1,5 @@
+import gzip  # Ajouter l'importation du module gzip
+import shutil
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from datetime import datetime
@@ -9,6 +11,7 @@ import pandas as pd
 DATA_DIR = "/opt/airflow/data"
 GZ_FILE = os.path.join(DATA_DIR, "meteo.csv.gz")
 CSV_FILE = os.path.join(DATA_DIR, "meteo.csv")  # Fichier décompressé
+
 def download_data():
     """Télécharge un fichier .csv.gz depuis une URL."""
     os.makedirs(DATA_DIR, exist_ok=True)
@@ -20,7 +23,6 @@ def download_data():
         print(f"Fichier téléchargé avec succès : {GZ_FILE}")
     else:
         raise Exception(f"Erreur lors du téléchargement : {result.stderr}")
-
 
 def decompress_file():
     """Décompresse le fichier .csv.gz."""
@@ -35,9 +37,6 @@ def decompress_file():
     except Exception as e:
         raise Exception(f"Erreur lors de la décompression du fichier .gz : {e}")
 
-
-
-
 def read_data():
     """Lit le fichier CSV décompressé et affiche un aperçu."""
     if not os.path.exists(CSV_FILE):
@@ -49,7 +48,6 @@ def read_data():
         print(df.head())
     except Exception as e:
         print(f"Erreur lors de la lecture du fichier CSV : {e}")
-
 
 default_args = {
     "owner": "airflow",
@@ -81,4 +79,4 @@ read_task = PythonOperator(
     dag=dag,
 )
 
-download_task>>decompress_task>>read_task
+download_task >> decompress_task >> read_task
