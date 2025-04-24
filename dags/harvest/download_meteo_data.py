@@ -69,6 +69,11 @@ download_task = PythonOperator(
     python_callable=download_data,
     dag=dag,
 )
+decompress_task = PythonOperator(
+    task_id="decompress_gz_csv",
+    python_callable=decompress_file,
+    dag=dag,
+)
 
 read_task = PythonOperator(
     task_id="read_gz_csv",
