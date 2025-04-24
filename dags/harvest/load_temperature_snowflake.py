@@ -28,7 +28,7 @@ def upload_to_snowflake():
 
     # Créer la table si elle n'existe pas
     create_table_sql = """
-    CREATE TABLE IF NOT EXISTS meteo_data (
+    CREATE TABLE IF NOT EXISTS temperature_data (
         Horodate STRING,
         Temp_realisee_lissee_C FLOAT,
         Temp_normale_lissee_C FLOAT,
@@ -44,7 +44,7 @@ def upload_to_snowflake():
 
     # Charger le fichier CSV dans le stage interne
     file_path = '/opt/airflow/data/temperature_radiation.csv'
-    stage_name = 'TEMP_STAGE'
+    stage_name = 'ENEDIS_STAGE'
 
     # Utiliser la commande PUT pour charger le fichier dans le stage
     put_command = f"PUT file://{file_path} @{stage_name}"
@@ -53,7 +53,7 @@ def upload_to_snowflake():
     # Copier les données depuis le stage dans la table Snowflake
     copy_query = """
     COPY INTO temperature_data
-    FROM @TEMP_STAGE/temperature_radiation.csv
+    FROM @ENEDIS_STAGE/temperature_radiation.csv
     FILE_FORMAT = (TYPE = 'CSV' FIELD_OPTIONALLY_ENCLOSED_BY = '"', FIELD_DELIMITER = ';')
     ON_ERROR = 'CONTINUE';
 """
