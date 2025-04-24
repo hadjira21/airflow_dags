@@ -9,7 +9,7 @@ import pandas as pd
 DATA_DIR = "/opt/airflow/data/enedis"
 CSV_PATH = os.path.join(DATA_DIR, "consommation_commune.csv")
 DATASET_ID = "consommation-elec-gaz-commune"  # ID du dataset sur data.enedis.fr
-API_URL = f"https://data.enedis.fr/api/records/1.0/search/?dataset={DATASET_ID}&rows=10000"
+API_URL = f"https://data.enedis.fr/api/records/1.0/search/?dataset=consommation-elec-gaz-commune&rows=10"
 
 # Fonctions
 def download_enedis_data():
