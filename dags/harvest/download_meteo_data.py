@@ -81,4 +81,4 @@ read_task = PythonOperator(
     dag=dag,
 )
 
-download_task>> decompress_task >> read_task
+download_task>>decompress_task>>read_task
