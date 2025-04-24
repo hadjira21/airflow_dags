@@ -12,7 +12,7 @@ GZ_FILE = os.path.join(DATA_DIR, "meteo.csv.gz")
 def download_data():
     """Télécharge un fichier .csv.gz depuis une URL."""
     os.makedirs(DATA_DIR, exist_ok=True)
-    url = "https://www.data.gouv.fr/fr/datasets/r/c1265c02-3a8e-4a28-961e-26b2fd704fe8"  
+    url = "https://data.enedis.fr/api/explore/v2.1/catalog/datasets/fa-entrees/exports/csv?lang=fr&timezone=Europe%2FBerlin&use_labels=true&delimiter=%3B"  
     command = ["curl", "-L", "-o", GZ_FILE, url]
     result = subprocess.run(command, capture_output=True, text=True)
 
