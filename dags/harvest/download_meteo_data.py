@@ -9,7 +9,6 @@ import pandas as pd
 DATA_DIR = "/opt/airflow/data"
 GZ_FILE = os.path.join(DATA_DIR, "meteo.csv.gz")
 CSV_FILE = os.path.join(DATA_DIR, "meteo.csv")  # Fichier décompressé
-
 def download_data():
     """Télécharge un fichier .csv.gz depuis une URL."""
     os.makedirs(DATA_DIR, exist_ok=True)
@@ -21,6 +20,7 @@ def download_data():
         print(f"Fichier téléchargé avec succès : {GZ_FILE}")
     else:
         raise Exception(f"Erreur lors du téléchargement : {result.stderr}")
+
 
 def decompress_file():
     """Décompresse le fichier .csv.gz."""
