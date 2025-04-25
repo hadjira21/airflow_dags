@@ -8,7 +8,7 @@ from datetime import datetime
 def upload_to_snowflake():
     conn_params = {
         'user': 'HADJIRABK',
-        'password': '42XCDpmzwMKxRww',
+        'password': '42XCDpmzwMKxRww', 
         'account': 'OKVCAFF-IE00559',
         'warehouse': 'COMPUTE_WH',
         'database': 'BRONZE',
