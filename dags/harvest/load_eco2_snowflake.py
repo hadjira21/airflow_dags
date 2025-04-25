@@ -23,7 +23,7 @@ def upload_to_snowflake():
     file_path = '/opt/airflow/data/eCO2mix_RTE_En-cours-TR/eCO2mix_RTE_En-cours-TR.csv'
     try:
         # Modification ici: utiliser l'espace comme délimiteur
-        df = pd.read_csv(file_path, delimiter=' ')
+        df = pd.read_csv(file_path, delimiter='\t')
         print("Aperçu des données CSV:")
         print(df.head())
         print(f"Nombre de lignes dans le CSV: {len(df)}")
