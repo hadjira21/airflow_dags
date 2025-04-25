@@ -112,7 +112,7 @@ def upload_to_snowflake():
 dag = DAG(
     'upload_meteo_data_to_snowflake',
     description='DAG pour uploader les données  METEO dans Snowflake',
-    schedule_interval=@daily, 
+    schedule_interval='@daily',
     start_date=datetime(2025, 4, 24),
     catchup=False
 )
