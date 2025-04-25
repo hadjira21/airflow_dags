@@ -101,8 +101,7 @@ def upload_to_snowflake():
     snowflake_hook.run(list_stage)
 
     # 5. Copie des données avec paramètres précis
-copy_query = """
-COPY INTO eco2mix_data
+copy_query = """COPY INTO eco2mix_data
 FROM (
     SELECT 
         $1::STRING, $2::STRING, 
@@ -145,9 +144,9 @@ FROM (
         TRY_CAST(REPLACE($39, ',', '.') AS FLOAT),
         TRY_CAST(REPLACE($40, ',', '.') AS FLOAT)
     FROM @RTE_STAGE_ECO2MIX/eco2mix_formatted.csv
-)
-FILE_FORMAT = (TYPE = 'CSV' FIELD_DELIMITER = ';' SKIP_HEADER = 1)
-"""
+    )
+    FILE_FORMAT = (TYPE = 'CSV' FIELD_DELIMITER = ';' SKIP_HEADER = 1)
+    """
     snowflake_hook.run(copy_query)
 
     # 6. Vérification des données importées
