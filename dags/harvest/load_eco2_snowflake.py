@@ -83,7 +83,7 @@ Perimetre STRING,
     copy_query = """
     COPY INTO eco2mix_data
     FROM @RTE_STAGE_ECO2MIX/eCO2mix_RTE_En-cours-TR.csv
-    FILE_FORMAT = (TYPE = 'CSV' FIELD_OPTIONALLY_ENCLOSED_BY = '"', FIELD_DELIMITER = ' ')
+    FILE_FORMAT = (TYPE = 'CSV' FIELD_OPTIONALLY_ENCLOSED_BY = '"', FIELD_DELIMITER = '\t')
     ON_ERROR = 'CONTINUE';
     """
     snowflake_hook.run(copy_query)
