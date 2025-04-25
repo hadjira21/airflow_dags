@@ -9,7 +9,7 @@ from datetime import datetime
 def upload_to_snowflake():
     conn_params = { 'user': 'HADJIRABK',    'password' : '42XCDpmzwMKxRww', 'account': 'OKVCAFF-IE00559', 'warehouse': 'COMPUTE_WH',   'database': 'BRONZE',   'schema': "RTE" }
     # Connexion à Snowflake
-    snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_conn', **conn_params  # Ajouter les paramètres de connexion)
+    snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_conn', **conn_params)
 
     # S'assurer que la base de données et le schéma sont sélectionnés
     snowflake_hook.run(f"USE DATABASE {conn_params['database']}")
