@@ -29,7 +29,7 @@ def upload_to_snowflake():
         
         # Sauvegarder en CSV avec formatage correct pour Snowflake
         temp_file = '/tmp/eco2mix_formatted.csv'
-        df.to_csv(temp_file, sep=';', index=False, encoding='utf-8')
+        df.to_csv(temp_file, sep=',', index=False, encoding='utf-8')
         print(f"Fichier temporaire créé: {temp_file}")
     except Exception as e:
         print(f"❌ Erreur lors de la lecture du CSV: {str(e)}")
