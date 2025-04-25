@@ -90,7 +90,7 @@ def upload_to_snowflake():
     snowflake_hook.run(create_table_sql)
 
     # Charger le fichier CSV dans le stage interne
-    file_path = '/opt/airflow/data/meteo_data.csv'
+    file_path = '/opt/airflow/data/meteo.csv'
     stage_name = 'METEO_STAGE'
 
     # Utiliser la commande PUT pour charger le fichier dans le stage
@@ -100,7 +100,7 @@ def upload_to_snowflake():
     # Copier les données depuis le stage dans la table Snowflake
     copy_query = """
     COPY INTO meteo_data
-    FROM @METEO_STAGE/meteo_data.csv
+    FROM @METEO_STAGE/meteo.csv
     FILE_FORMAT = (TYPE = 'CSV' FIELD_OPTIONALLY_ENCLOSED_BY = '"', FIELD_DELIMITER = ';')
     ON_ERROR = 'CONTINUE';
 """
