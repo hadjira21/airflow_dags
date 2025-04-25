@@ -73,7 +73,7 @@ def upload_to_snowflake():
     snowflake_hook.run(create_table_sql)
 
     # Charger le fichier CSV dans le stage interne
-    file_path = '/opt/airflow/data/eCO2mix_RTE_En-cours-TR.csv'
+    file_path = '/opt/airflow/data/eCO2mix_RTE_En-cours-TR/eCO2mix_RTE_En-cours-TR.csv'
     stage_name = 'RTE_STAGE_ECO2MIX'
 
     # Charger le fichier dans le stage interne
