@@ -74,8 +74,22 @@ def transform_data():
     print("Données transformées et prêtes pour Snowflake")
 
 def upload_to_snowflake():
-    """Charge les données dans Snowflake."""
-    hook = SnowflakeHook(snowflake_conn_id=SNOWFLAKE_CONN_ID)
+    conn_params = {
+        'user': 'HADJIRABK',  
+        'password' : '42XCDpmzwMKxRww',
+        'account': 'OKVCAFF-IE00559',
+        'warehouse': 'COMPUTE_WH', 
+        'database': 'BRONZE', 
+        'schema': "METEO"      
+    }
+
+    # Connexion à Snowflake
+    snowflake_hook = SnowflakeHook(
+        snowflake_conn_id='snowflake_conn', 
+        **conn_params 
+    )
+    snowflake_hook.run(f"USE DATABASE {conn_params['database']}")
+    snowflake_hook.run(f"USE SCHEMA {conn_params['schema']}")
     
     # Création de la table si elle n'existe pas
     create_table_sql = f"""
