@@ -22,7 +22,7 @@ def upload_to_snowflake():
     # 1. Vérification du fichier CSV
     file_path = '/opt/airflow/data/eCO2mix_RTE_En-cours-TR/eCO2mix_RTE_En-cours-TR.csv'
     try:
-        df = pd.read_csv(file_path, delimiter=',')
+        df = pd.read_csv(file_path, delimiter=';')
         print("Aperçu des données CSV:")
         print(df.head())
         print(f"Nombre de lignes dans le CSV: {len(df)}")
@@ -145,7 +145,7 @@ FROM (
         TRY_CAST(REPLACE($40, ',', '.') AS FLOAT)
     FROM @RTE_STAGE_ECO2MIX/eco2mix_formatted.csv
     )
-    FILE_FORMAT = (TYPE = 'CSV' FIELD_DELIMITER = ',' SKIP_HEADER = 1)
+    FILE_FORMAT = (TYPE = 'CSV' FIELD_DELIMITER = ';' SKIP_HEADER = 1)
     """
     snowflake_hook.run(copy_query)
 
