@@ -101,7 +101,7 @@ def upload_to_snowflake():
     snowflake_hook.run(list_stage)
 
     # 5. Copie des données avec paramètres précis
-copy_query = """COPY INTO eco2mix_data
+    copy_query = """COPY INTO eco2mix_data
 FROM (
     SELECT 
         $1::STRING, $2::STRING, 
