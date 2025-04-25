@@ -74,7 +74,7 @@ def upload_to_snowflake():
 
     # Charger le fichier CSV dans le stage interne
     file_path = '/opt/airflow/data/eCO2mix_RTE_En-cours-TR.csv'
-    stage_name = 'ENEDIS_STAGE'
+    stage_name = 'RTE_STAGE'
 
     # Charger le fichier dans le stage interne
     put_command = f"PUT file://{file_path} @{stage_name}"
