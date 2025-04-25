@@ -22,13 +22,15 @@ def upload_to_snowflake():
     # 1. Vérification du fichier CSV
     file_path = '/opt/airflow/data/eCO2mix_RTE_En-cours-TR/eCO2mix_RTE_En-cours-TR.csv'
     try:
-        df = pd.read_csv(file_path, delimiter=';')
+        # Modification ici: utiliser l'espace comme délimiteur
+        df = pd.read_csv(file_path, delimiter=' ')
         print("Aperçu des données CSV:")
         print(df.head())
         print(f"Nombre de lignes dans le CSV: {len(df)}")
         
         # Sauvegarder en CSV avec formatage correct pour Snowflake
         temp_file = '/tmp/eco2mix_formatted.csv'
+        # Ici on garde la virgule comme séparateur pour Snowflake
         df.to_csv(temp_file, sep=',', index=False, encoding='utf-8')
         print(f"Fichier temporaire créé: {temp_file}")
     except Exception as e:
@@ -145,7 +147,7 @@ FROM (
         TRY_CAST(REPLACE($40, ',', '.') AS FLOAT)
     FROM @RTE_STAGE_ECO2MIX/eco2mix_formatted.csv
     )
-    FILE_FORMAT = (TYPE = 'CSV' FIELD_DELIMITER = ';' SKIP_HEADER = 1)
+    FILE_FORMAT = (TYPE = 'CSV' FIELD_DELIMITER = ',' SKIP_HEADER = 1)
     """
     snowflake_hook.run(copy_query)
 
@@ -157,6 +159,7 @@ FROM (
     # Nettoyage du fichier temporaire
     import os
     os.remove(temp_file)
+
 # Définir le DAG Airflow
 dag = DAG(
     'upload_eco2_to_snowflake',
