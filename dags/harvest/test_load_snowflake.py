@@ -84,12 +84,12 @@ def upload_to_snowflake():
     }
 
     # Connexion à Snowflake
-    snowflake_hook = SnowflakeHook(
+    hook = SnowflakeHook(
         snowflake_conn_id='snowflake_conn', 
         **conn_params 
     )
-    snowflake_hook.run(f"USE DATABASE {conn_params['database']}")
-    snowflake_hook.run(f"USE SCHEMA {conn_params['schema']}")
+    hook.run(f"USE DATABASE {conn_params['database']}")
+    hook.run(f"USE SCHEMA {conn_params['schema']}")
     
     # Création de la table si elle n'existe pas
     create_table_sql = f"""
