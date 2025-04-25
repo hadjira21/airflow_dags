@@ -82,7 +82,7 @@ def upload_to_snowflake():
     # Copier les données depuis le stage vers la table Snowflake
     copy_query = """
     COPY INTO eco2mix_data
-    FROM @RTE_STAGE_ECO2MIX/eCO2mix_RTE_En-cours-TR/eCO2mix_RTE_En-cours-TR.csv
+    FROM @RTE_STAGE_ECO2MIX
     FILE_FORMAT = (TYPE = 'CSV' FIELD_OPTIONALLY_ENCLOSED_BY = '"', FIELD_DELIMITER = ';')
     ON_ERROR = 'CONTINUE';
     """
