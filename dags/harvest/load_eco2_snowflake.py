@@ -101,20 +101,53 @@ def upload_to_snowflake():
     snowflake_hook.run(list_stage)
 
     # 5. Copie des données avec paramètres précis
-    copy_query = f"""
-    COPY INTO eco2mix_data
-    FROM @{stage_name}/eco2mix_formatted.csv
-    FILE_FORMAT = (
-        TYPE = 'CSV'
-        FIELD_DELIMITER = ';'
-        SKIP_HEADER = 1
-        FIELD_OPTIONALLY_ENCLOSED_BY = '"'
-        EMPTY_FIELD_AS_NULL = TRUE
-        NULL_IF = ('NULL', 'null', '')
-        ERROR_ON_COLUMN_COUNT_MISMATCH = FALSE
-    )
-    FORCE = TRUE
-    """
+copy_query = """
+COPY INTO eco2mix_data
+FROM (
+    SELECT 
+        $1::STRING, $2::STRING, 
+        TO_DATE($3, 'DD/MM/YYYY'), 
+        $4::STRING,
+        TRY_CAST(REPLACE($5, ',', '.') AS FLOAT),
+        TRY_CAST(REPLACE($6, ',', '.') AS FLOAT),
+        TRY_CAST(REPLACE($7, ',', '.') AS FLOAT),
+        TRY_CAST(REPLACE($8, ',', '.') AS FLOAT),
+        TRY_CAST(REPLACE($9, ',', '.') AS FLOAT),
+        TRY_CAST(REPLACE($10, ',', '.') AS FLOAT),
+        TRY_CAST(REPLACE($11, ',', '.') AS FLOAT),
+        TRY_CAST(REPLACE($12, ',', '.') AS FLOAT),
+        TRY_CAST(REPLACE($13, ',', '.') AS FLOAT),
+        TRY_CAST(REPLACE($14, ',', '.') AS FLOAT),
+        TRY_CAST(REPLACE($15, ',', '.') AS FLOAT),
+        TRY_CAST(REPLACE($16, ',', '.') AS FLOAT),
+        TRY_CAST(REPLACE($17, ',', '.') AS FLOAT),
+        TRY_CAST(REPLACE($18, ',', '.') AS FLOAT),
+        TRY_CAST(REPLACE($19, ',', '.') AS FLOAT),
+        TRY_CAST(REPLACE($20, ',', '.') AS FLOAT),
+        TRY_CAST(REPLACE($21, ',', '.') AS FLOAT),
+        TRY_CAST(REPLACE($22, ',', '.') AS FLOAT),
+        TRY_CAST(REPLACE($23, ',', '.') AS FLOAT),
+        TRY_CAST(REPLACE($24, ',', '.') AS FLOAT),
+        TRY_CAST(REPLACE($25, ',', '.') AS FLOAT),
+        TRY_CAST(REPLACE($26, ',', '.') AS FLOAT),
+        TRY_CAST(REPLACE($27, ',', '.') AS FLOAT),
+        TRY_CAST(REPLACE($28, ',', '.') AS FLOAT),
+        TRY_CAST(REPLACE($29, ',', '.') AS FLOAT),
+        TRY_CAST(REPLACE($30, ',', '.') AS FLOAT),
+        TRY_CAST(REPLACE($31, ',', '.') AS FLOAT),
+        TRY_CAST(REPLACE($32, ',', '.') AS FLOAT),
+        TRY_CAST(REPLACE($33, ',', '.') AS FLOAT),
+        TRY_CAST(REPLACE($34, ',', '.') AS FLOAT),
+        TRY_CAST(REPLACE($35, ',', '.') AS FLOAT),
+        TRY_CAST(REPLACE($36, ',', '.') AS FLOAT),
+        TRY_CAST(REPLACE($37, ',', '.') AS FLOAT),
+        TRY_CAST(REPLACE($38, ',', '.') AS FLOAT),
+        TRY_CAST(REPLACE($39, ',', '.') AS FLOAT),
+        TRY_CAST(REPLACE($40, ',', '.') AS FLOAT)
+    FROM @RTE_STAGE_ECO2MIX/eco2mix_formatted.csv
+)
+FILE_FORMAT = (TYPE = 'CSV' FIELD_DELIMITER = ';' SKIP_HEADER = 1)
+"""
     snowflake_hook.run(copy_query)
 
     # 6. Vérification des données importées
