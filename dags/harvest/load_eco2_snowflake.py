@@ -40,10 +40,12 @@ def upload_to_snowflake():
         FIELD_OPTIONALLY_ENCLOSED_BY = '"',
         FIELD_DELIMITER = '\\t',
         DATE_FORMAT = 'YYYY/MM/DD',
-        SKIP_HEADER = 1
+        SKIP_HEADER = 1,
+        ERROR_ON_COLUMN_COUNT_MISMATCH = FALSE
     )
     ON_ERROR = 'CONTINUE';
     """
+
     snowflake_hook.run(copy_query)
 
 # Définition du DAG Airflow
