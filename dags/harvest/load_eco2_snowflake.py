@@ -85,16 +85,11 @@ Perimetre STRING,
         FROM @RTE_STAGE_ECO2MIX/eCO2mix_RTE_En-cours-TR.csv
         FILE_FORMAT = (
             TYPE = 'CSV',
-            FIELD_DELIMITER = ';',  # Changé de '\t' à ';'
-            SKIP_HEADER = 1,        # Important si votre fichier a une ligne d'en-tête
+            FIELD_DELIMITER = ';',
             FIELD_OPTIONALLY_ENCLOSED_BY = '"',
             TRIM_SPACE = TRUE,
-            ENCODING = 'ISO-8859-1'  # Correspond à l'encodage que vous utilisez pour lire le fichier
-        )
-    ON_ERROR = 'CONTINUE'; """
-
-
-
+            ENCODING = 'ISO-8859-1'          )    
+            ON_ERROR = 'CONTINUE'; """
     snowflake_hook.run(copy_query)
 
     print("✅ Données insérées avec succès dans Snowflake.")
