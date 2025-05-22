@@ -85,7 +85,7 @@ Perimetre STRING,
         FROM @RTE_STAGE_ECO2MIX/eCO2mix_RTE_En-cours-TR.csv
         FILE_FORMAT = (
             TYPE = 'CSV',
-            FIELD_DELIMITER = '\t',
+            FIELD_DELIMITER = ';',
             FIELD_OPTIONALLY_ENCLOSED_BY = '"',
             TRIM_SPACE = TRUE,
             ENCODING = 'ISO-8859-1'          )    
