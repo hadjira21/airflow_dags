@@ -12,7 +12,7 @@ def upload_to_snowflake():
         'account': 'OKVCAFF-IE00559', # Compte Snowflake
         'warehouse': 'COMPUTE_WH', # Entrepôt Snowflake
         'database': 'BRONZE', # Base de données
-        'schema': "RTE"      
+        'schema': "METEO"      
     }
     # Connexion à Snowflake
     snowflake_hook = SnowflakeHook(
@@ -72,7 +72,7 @@ def upload_to_snowflake():
 
     # Charger le fichier CSV dans le stage interne
     file_path = '/opt/airflow/data/eCO2mix_RTE_En-cours-TR/eCO2mix_RTE_En-cours-TR.csv'
-    stage_name = 'RTE_STAGE_ECO2MIX'
+    stage_name = 'METEO_STAGE'
 
     # Charger le fichier dans le stage interne
     put_command = f"PUT file://{file_path} @{stage_name}"
@@ -82,13 +82,11 @@ def upload_to_snowflake():
     # Copier les données depuis le stage vers la table Snowflake
     copy_query = """
     COPY INTO eco2mix_data
-    FROM @RTE_STAGE_ECO2MIX/eCO2mix_RTE_En-cours-TR.csv
+    FROM @METEO_STAGE/eCO2mix_RTE_En-cours-TR.csv
     FILE_FORMAT = (TYPE = 'CSV' FIELD_OPTIONALLY_ENCLOSED_BY = '"', FIELD_DELIMITER = '/t')
     ON_ERROR = 'CONTINUE';
     """
     snowflake_hook.run(copy_query)
-
-    print("✅ Données insérées avec succès dans Snowflake.")
 
 # Définir le DAG Airflow
 dag = DAG(
