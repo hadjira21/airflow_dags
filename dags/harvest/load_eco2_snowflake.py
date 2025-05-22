@@ -33,22 +33,20 @@ def upload_to_snowflake():
 
     # Copier les données depuis le stage vers la table Snowflake
     copy_query = """
-    COPY INTO eco2mix_data
-    FROM @METEO_STAGE/eCO2mix_clean.csv.gz
-    FILE_FORMAT = (
-        TYPE = 'CSV',
-        FIELD_OPTIONALLY_ENCLOSED_BY = '"',
-        FIELD_DELIMITER = '\t',
-        DATE_FORMAT = 'YYYY-MM-DD',
-        SKIP_HEADER = 1,
-        ERROR_ON_COLUMN_COUNT_MISMATCH = FALSE
-    )
-    ON_ERROR = 'CONTINUE';
+COPY INTO eco2mix_data
+FROM @METEO_STAGE/eCO2mix_RTE_En-cours-TR.csv.gz
+FILE_FORMAT = (
+    TYPE = 'CSV',
+    FIELD_DELIMITER = '\t',
+    FIELD_OPTIONALLY_ENCLOSED_BY = '"',
+    DATE_FORMAT = 'YYYY-MM-DD',
+    SKIP_HEADER = 1,
+    ERROR_ON_COLUMN_COUNT_MISMATCH = FALSE
+)
+ON_ERROR = 'CONTINUE';
+
     """
-    COPY INTO eco2mix_data
-    FROM @METEO_STAGE/eCO2mix_RTE_En-cours-TR.csv.gz
-    FILE_FORMAT = METEO.TSV_FORMAT
-    ON_ERROR = 'CONTINUE';
+
     snowflake_hook.run(copy_query)
 
 # Définition du DAG Airflow
