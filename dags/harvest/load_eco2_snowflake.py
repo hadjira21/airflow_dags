@@ -28,13 +28,13 @@ def upload_to_snowflake():
     stage_name = 'METEO_STAGE'
 
     # Upload fichier dans stage Snowflake (sans compression)
-    put_command = f"PUT file://{file_path} @{stage_name}/eCO2mix_RTE_En-cours-TR.csv AUTO_COMPRESS=FALSE"
+    put_command = f"PUT file://{file_path} @{stage_name}/eCO2mix_clean.csv.gz AUTO_COMPRESS=TRUE"
     snowflake_hook.run(put_command)
 
     # Copier les données depuis le stage vers la table Snowflake
     copy_query = """
     COPY INTO eco2mix_data
-    FROM @METEO_STAGE/eCO2mix_RTE_En-cours-TR.csv
+    FROM @METEO_STAGE/eCO2mix_clean.csv.gz
     FILE_FORMAT = (
         TYPE = 'CSV',
         FIELD_OPTIONALLY_ENCLOSED_BY = '"',
