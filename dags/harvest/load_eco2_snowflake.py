@@ -84,7 +84,7 @@ def upload_to_snowflake():
     copy_query = """
     COPY INTO eco2mix_data
     FROM @METEO_STAGE/eCO2mix_RTE_En-cours-TR.csv
-    FILE_FORMAT = (TYPE = 'CSV' FIELD_OPTIONALLY_ENCLOSED_BY = '"',FIELD_DELIMITER = '\t' , DATE_FORMAT = 'YYYY/MM/DD',)
+    FILE_FORMAT = (TYPE = 'CSV' FIELD_OPTIONALLY_ENCLOSED_BY = '"',FIELD_DELIMITER = '\t' , DATE_FORMAT = 'YYYY/MM/DD', SKIP_HEADER = 1)
     ON_ERROR = 'CONTINUE';
     """
     snowflake_hook.run(copy_query)
