@@ -54,7 +54,7 @@ def read_data():
 
     try:
         # Lire le fichier CSV avec un encodage alternatif
-        df = pd.read_csv(csv_path, encoding='ISO-8859-1', delimiter=';')
+        df = pd.read_csv(csv_path, encoding='ISO-8859-1', delimiter='/t')
         # Utilisation de ISO-8859-1 pour les caractères spéciaux
         print("Aperçu des données :")
         print(df.head())
