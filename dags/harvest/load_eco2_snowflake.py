@@ -38,8 +38,8 @@ def upload_to_snowflake():
     FILE_FORMAT = (
         TYPE = 'CSV',
         FIELD_OPTIONALLY_ENCLOSED_BY = '"',
-        FIELD_DELIMITER = '\\t',
-        DATE_FORMAT = 'YYYY/MM/DD',
+        FIELD_DELIMITER = ';',
+        DATE_FORMAT = 'YYYY-MM-DD',
         SKIP_HEADER = 1,
         ERROR_ON_COLUMN_COUNT_MISMATCH = FALSE
     )
