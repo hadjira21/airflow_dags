@@ -26,7 +26,7 @@ def upload_to_snowflake():
     snowflake_hook.run(f"USE DATABASE {conn_params['database']}")
     snowflake_hook.run(f"USE SCHEMA {conn_params['schema']}")
 
-    # Création de la table (structure doit correspondre au fichier CSV)
+    # Création de la table (structure doit correspondre au fichier Excel)
     create_table_sql = """
     CREATE TABLE IF NOT EXISTS eco2mix_data (
         Perimetre STRING,
@@ -73,25 +73,38 @@ def upload_to_snowflake():
     """
     snowflake_hook.run(create_table_sql)
 
-    # Chemin du fichier CSV
-    file_path = '/opt/airflow/data/eCO2mix_RTE_En-cours-TR/eCO2mix_RTE_En-cours-TR.csv'
-    stage_name = 'RTE_STAGE_ECO2MIX'
-
+    # Chemin du fichier Excel
+    file_path = '/opt/airflow/data/eCO2mix_RTE_En-cours-TR/eCO2mix_RTE_En-cours-TR.xls'
+    
     # Vérification du fichier
     if not os.path.exists(file_path):
         raise FileNotFoundError(f"Fichier introuvable: {file_path}")
 
+    # Lecture du fichier Excel
+    df = pd.read_excel(file_path)
+    
+    # Conversion des dates si nécessaire
+    if 'Date' in df.columns:
+        df['Date'] = pd.to_datetime(df['Date']).dt.date
+    
+    # Sauvegarde temporaire en CSV pour l'upload
+    temp_csv_path = '/tmp/eco2mix_temp.csv'
+    df.to_csv(temp_csv_path, index=False, sep=';', encoding='iso-8859-1')
+    
+    # Configuration du stage Snowflake
+    stage_name = 'RTE_STAGE_ECO2MIX'
+    
     # Création du stage interne si nécessaire
     snowflake_hook.run(f"CREATE STAGE IF NOT EXISTS {stage_name}")
-
-    # Chargement du fichier dans le stage
-    put_command = f"PUT file://{file_path} @{stage_name}"
+    
+    # Chargement du fichier temporaire dans le stage
+    put_command = f"PUT file://{temp_csv_path} @{stage_name}"
     snowflake_hook.run(put_command)
-
-    # Copie des données sans spécifier les colonnes
+    
+    # Copie des données
     copy_query = f"""
     COPY INTO eco2mix_data
-    FROM @{stage_name}/eCO2mix_RTE_En-cours-TR.csv
+    FROM @{stage_name}/eco2mix_temp.csv
     FILE_FORMAT = (
         TYPE = 'CSV',
         FIELD_DELIMITER = ';',
@@ -107,6 +120,9 @@ def upload_to_snowflake():
     
     # Exécution de la copie
     snowflake_hook.run(copy_query)
+    
+    # Nettoyage du fichier temporaire
+    os.remove(temp_csv_path)
     
     # Vérification du chargement
     result = snowflake_hook.get_first("SELECT COUNT(*) FROM eco2mix_data")
