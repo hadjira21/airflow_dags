@@ -92,7 +92,7 @@ Perimetre STRING,
             ON_ERROR = 'CONTINUE'; """
     snowflake_hook.run(copy_query)
 
-    print("✅ Données insérées avec succès dans Snowflake.")
+    print("Données insérées avec succès dans Snowflake.")
 
 # Définir le DAG Airflow
 dag = DAG(
