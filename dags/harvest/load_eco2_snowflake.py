@@ -75,8 +75,9 @@ def upload_to_snowflake():
     stage_name = 'METEO_STAGE'
 
     # Charger le fichier dans le stage interne
-    put_command = f"PUT file://{file_path} @{stage_name}"
+    put_command = f"PUT file://{file_path} @{stage_name}/eCO2mix_RTE_En-cours-TR.csv AUTO_COMPRESS=FALSE"
     snowflake_hook.run(put_command)
+    
 
     
     # Copier les données depuis le stage vers la table Snowflake
