@@ -89,7 +89,7 @@ default_args = {
 }
 
 dag = DAG(
-    "download_data_eco2mix",
+    "load_data_eco2mix",
     default_args=default_args,
     schedule_interval="@daily",
     catchup=False,
