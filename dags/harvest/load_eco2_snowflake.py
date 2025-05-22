@@ -26,8 +26,7 @@ def upload_to_snowflake():
 
     # Créer la table si elle n'existe pas
     create_table_sql = """
-    CREATE TABLE IF NOT EXISTS eco2mix_data (
-Perimetre STRING,
+    CREATE TABLE IF NOT EXISTS eco2mix_data ( Perimetre STRING,
     Nature STRING,
     Date DATE,
     Heures STRING,
@@ -78,11 +77,13 @@ Perimetre STRING,
     # Charger le fichier dans le stage interne
     put_command = f"PUT file://{file_path} @{stage_name}"
     snowflake_hook.run(put_command)
+
+    
     # Copier les données depuis le stage vers la table Snowflake
     copy_query = """
     COPY INTO eco2mix_data
     FROM @RTE_STAGE_ECO2MIX/eCO2mix_RTE_En-cours-TR.csv
-    FILE_FORMAT = (TYPE = 'CSV' FIELD_OPTIONALLY_ENCLOSED_BY = '"', FIELD_DELIMITER = ';')
+    FILE_FORMAT = (TYPE = 'CSV' FIELD_OPTIONALLY_ENCLOSED_BY = '"', FIELD_DELIMITER = '/t')
     ON_ERROR = 'CONTINUE';
     """
     snowflake_hook.run(copy_query)
