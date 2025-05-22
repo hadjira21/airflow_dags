@@ -81,11 +81,20 @@ Perimetre STRING,
 
     # Copier les données depuis le stage vers la table Snowflake
     copy_query = """
-    COPY INTO eco2mix_data
-    FROM @RTE_STAGE_ECO2MIX/eCO2mix_RTE_En-cours-TR.csv
-    FILE_FORMAT = (TYPE = 'CSV' FIELD_OPTIONALLY_ENCLOSED_BY = '"', FIELD_DELIMITER = '\t')
-    ON_ERROR = 'CONTINUE';
-    """
+        COPY INTO eco2mix_data
+        FROM @RTE_STAGE_ECO2MIX/eCO2mix_RTE_En-cours-TR.csv
+        FILE_FORMAT = (
+            TYPE = 'CSV',
+            FIELD_DELIMITER = ';',  # Changé de '\t' à ';'
+            SKIP_HEADER = 1,        # Important si votre fichier a une ligne d'en-tête
+            FIELD_OPTIONALLY_ENCLOSED_BY = '"',
+            TRIM_SPACE = TRUE,
+            ENCODING = 'ISO-8859-1'  # Correspond à l'encodage que vous utilisez pour lire le fichier
+        )
+    ON_ERROR = 'CONTINUE'; """
+
+
+
     snowflake_hook.run(copy_query)
 
     print("✅ Données insérées avec succès dans Snowflake.")
