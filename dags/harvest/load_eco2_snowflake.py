@@ -29,7 +29,6 @@ def upload_to_snowflake():
     # Création de la table (structure doit correspondre au fichier Excel)
     create_table_sql = """
     CREATE TABLE IF NOT EXISTS eco2mix_data (
-        Perimetre STRING,
         Nature STRING,
         Date DATE,
         Heures STRING,
