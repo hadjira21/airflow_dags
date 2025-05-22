@@ -45,7 +45,10 @@ def upload_to_snowflake():
     )
     ON_ERROR = 'CONTINUE';
     """
-
+    COPY INTO eco2mix_data
+    FROM @METEO_STAGE/eCO2mix_RTE_En-cours-TR.csv.gz
+    FILE_FORMAT = METEO.TSV_FORMAT
+    ON_ERROR = 'CONTINUE';
     snowflake_hook.run(copy_query)
 
 # Définition du DAG Airflow
