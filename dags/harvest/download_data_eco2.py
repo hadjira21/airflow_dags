@@ -5,7 +5,7 @@ import os
 import subprocess
 import zipfile
 import pandas as pd
-import unidecode  # Assure-toi que ce package est installé dans ton environnement Airflow
+import unidecode 
 
 # Définition du dossier de stockage
 DATA_DIR = "/opt/airflow/data"
