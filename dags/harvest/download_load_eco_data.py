@@ -45,7 +45,7 @@ default_args = {
 }
 
 with DAG(
-    dag_id='upload_eco2mix_to_snowflake',
+    dag_id='upload_eco2mix_to_snowflake2',
     default_args=default_args,
     description='Upload eco2mix CSV data to Snowflake',
     schedule_interval=None,  # ou "0 6 * * *" pour une exécution quotidienne à 6h
