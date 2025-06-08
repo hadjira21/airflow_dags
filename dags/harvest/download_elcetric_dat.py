@@ -12,7 +12,9 @@ CSV_FILE = os.path.join(DATA_DIR, "electrique_commune.csv")
 def download_data():
     """Télécharge le fichier CSV depuis l'URL fournie."""
     os.makedirs(DATA_DIR, exist_ok=True)
-    url = "/api/explore/v2.1/catalog/datasets/production-electrique-par-filiere-a-la-maille-commune/records?limit=20"
+    
+    
+    url = "https://data.enedis.fr/api/explore/v2.1/catalog/datasets/production-electrique-par-filiere-a-la-maille-commune/exports/csv?lang=fr&timezone=Europe%2FBerlin&use_labels=true&delimiter=%3B"
     command = ["curl", "-L", "-o", CSV_FILE, url]
     result = subprocess.run(command, capture_output=True, text=True)
 
