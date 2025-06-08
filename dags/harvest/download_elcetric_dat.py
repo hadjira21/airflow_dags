@@ -14,7 +14,7 @@ def download_data():
     os.makedirs(DATA_DIR, exist_ok=True)
     
     
-    url = "https://data.enedis.fr/api/explore/v2.1/catalog/datasets/production-electrique-par-filiere-a-la-maille-commune/exports/csv?lang=fr&timezone=Europe%2FBerlin&use_labels=true&delimiter=%3B"
+    url = "https://data.enedis.fr/api/explore/v2.1/catalog/datasets/production-electrique-par-filiere-a-la-maille-commune/records?limit=20"
     command = ["curl", "-L", "-o", CSV_FILE, url]
     result = subprocess.run(command, capture_output=True, text=True)
 
