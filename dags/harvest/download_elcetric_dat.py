@@ -5,19 +5,14 @@ import os
 import subprocess
 import pandas as pd
 
-# Dossier de destination
 DATA_DIR = "/opt/airflow/data"
 CSV_FILE = os.path.join(DATA_DIR, "electrique_commune.csv")
 
 def download_data():
-    """Télécharge le fichier CSV depuis l'URL fournie."""
     os.makedirs(DATA_DIR, exist_ok=True)
-    
-    
-    url = "https://data.enedis.fr/api/explore/v2.1/catalog/datasets/production-electrique-par-filiere-a-la-maille-commune"
+    url = "https://data.enedis.fr/api/explore/v2.1/catalog/datasets/production-electrique-par-filiere-a-la-maille-commune/exports/csv?lang=fr&timezone=Europe%2FBerlin&use_labels=true&delimiter=%3B"
     command = ["curl", "-L", "-o", CSV_FILE, url]
     result = subprocess.run(command, capture_output=True, text=True)
-
     if result.returncode == 0:
         print(f"Fichier téléchargé avec succès : {CSV_FILE}")
     else:
@@ -32,9 +27,7 @@ def read_data():
         print(df.head())
     except Exception as e:
         print(f"Erreur lors de la lecture du fichier CSV : {e}")
-
-default_args = {  "owner": "airflow", "start_date": datetime(2025, 3, 20), "retries": 0,}
-
+default_args = {"owner": "airflow", "start_date": datetime(2020, 3, 20), "retries": 0,}
 dag = DAG( "download_and_process_electrique_data", default_args=default_args, schedule_interval="@daily", catchup=False,)
 download_task = PythonOperator( task_id="download_csv_data", python_callable=download_data, dag=dag, )
 read_task = PythonOperator(task_id="read_csv_data", python_callable=read_data, dag=dag,)
