@@ -144,23 +144,14 @@ def upload_to_snowflake(**kwargs):
 
 
 default_args = {'owner': 'airflow', 'retries': 1,}
+dag = DAG("upload_eco2mix_to_snowflake_simple", default_args=default_args, schedule_interval="@daily", catchup=False,)
 
-with DAG(
-    dag_id='upload_eco2mix_to_snowflake_simple',
-    default_args=default_args,
-    description='Upload eCO2mix CSV to Snowflake without custom operator',
-    schedule_interval=None,
-    start_date=days_ago(1),
-    catchup=False,
-    tags=['eco2mix', 'snowflake'],
-) as dag:
-
-    load_task = PythonOperator(task_id='load_csv_to_snowflake',
+load_task = PythonOperator(task_id='load_csv_to_snowflake',
         python_callable=upload_to_snowflake,
         provide_context=True,
     )
 
-    load_task
+load_task
 
 
 
