@@ -1,5 +1,6 @@
 from airflow import DAG
 from airflow.operators.python import PythonOperator
+from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 from datetime import datetime
 import os
 import subprocess
@@ -27,8 +28,22 @@ def read_data():
         print(df.head())
     except Exception as e:
         print(f"Erreur lors de la lecture du fichier CSV : {e}")
+
+# def upload_to_snowflake():
+#     conn_params = {'user': 'HADJIRABK', 'password' : '42XCDpmzwMKxRww', 'account': 'OKVCAFF-IE00559',
+#     'warehouse': 'COMPUTE_WH', 'database': 'BRONZE',  'schema': "ENEDIS" }
+#     snowflake_hook = SnowflakeHook( snowflake_conn_id='snowflake_conn', **conn_params)
+#     snowflake_hook.run(f"USE DATABASE {conn_params['database']}")
+#     snowflake_hook.run(f"USE SCHEMA {conn_params['schema']}")
+#     create_table_sql = """CREATE TABLE IF NOT EXISTS electric_data (
+#         Horodate STRING, Temp_realisee_lissee_C FLOAT, Temp_normale_lissee_C FLOAT,
+#         Diff_Temp_Realisee_Normale_C FLOAT,  Pseudo_rayonnement FLOAT,
+#         Annee INT,Mois INT, Jour INT, Annee_Mois_Jour STRING); """
+#     snowflake_hook.run(create_table_sql)
+
 default_args = {"owner": "airflow", "start_date": datetime(2020, 3, 20), "retries": 0,}
 dag = DAG( "download_and_process_electrique_data", default_args=default_args, schedule_interval="@daily", catchup=False,)
 download_task = PythonOperator( task_id="download_csv_data", python_callable=download_data, dag=dag, )
 read_task = PythonOperator(task_id="read_csv_data", python_callable=read_data, dag=dag,)
+# upload_task = PythonOperator(task_id='upload_to_snowflake', python_callable=upload_to_snowflake, dag=dag)
 download_task >> read_task

@@ -5,41 +5,16 @@ from airflow.operators.python import PythonOperator
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 from datetime import datetime
 
-# Fonction d'insertion dans Snowflake
 def upload_to_snowflake():
-    conn_params = {
-        'user': 'HADJIRABK',          # Utilisateur Snowflake
-        'password' : '42XCDpmzwMKxRww',
-        'account': 'OKVCAFF-IE00559', # Compte Snowflake
-        'warehouse': 'COMPUTE_WH', # Entrepôt Snowflake
-        'database': 'BRONZE', # Base de données
-        'schema': "ENEDIS"      
-    }
-
-    # Connexion à Snowflake
-    snowflake_hook = SnowflakeHook(
-        snowflake_conn_id='snowflake_conn', 
-        **conn_params  # Ajouter les paramètres de connexion
-    )
-
-    # S'assurer que la base de données et le schéma sont sélectionnés
+    conn_params = {'user': 'HADJIRABK', 'password' : '42XCDpmzwMKxRww', 'account': 'OKVCAFF-IE00559',
+    'warehouse': 'COMPUTE_WH', 'database': 'BRONZE',  'schema': "ENEDIS" }
+    snowflake_hook = SnowflakeHook( snowflake_conn_id='snowflake_conn', **conn_params)
     snowflake_hook.run(f"USE DATABASE {conn_params['database']}")
     snowflake_hook.run(f"USE SCHEMA {conn_params['schema']}")
-
-    # Créer la table si elle n'existe pas
-    create_table_sql = """
-    CREATE TABLE IF NOT EXISTS temperature_data (
-        Horodate STRING,
-        Temp_realisee_lissee_C FLOAT,
-        Temp_normale_lissee_C FLOAT,
-        Diff_Temp_Realisee_Normale_C FLOAT,
-        Pseudo_rayonnement FLOAT,
-        Annee INT,
-        Mois INT,
-        Jour INT,
-        Annee_Mois_Jour STRING
-    );
-    """
+    create_table_sql = """CREATE TABLE IF NOT EXISTS temperature_data (
+        Horodate STRING, Temp_realisee_lissee_C FLOAT, Temp_normale_lissee_C FLOAT,
+        Diff_Temp_Realisee_Normale_C FLOAT,  Pseudo_rayonnement FLOAT,
+        Annee INT,Mois INT, Jour INT, Annee_Mois_Jour STRING); """
     snowflake_hook.run(create_table_sql)
 
     # Charger le fichier CSV dans le stage interne

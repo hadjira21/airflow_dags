@@ -27,7 +27,7 @@ def fetch_atmosud_data():
     """Récupère les données depuis l'API AtmoSud"""
     endpoint = "mesures"
     params = {
-        'size': 10000,  # Nombre de résultats à retourner
+        'size': 10000,  
         'page': 1,
         'sort': 'date_debut,asc'
     }
