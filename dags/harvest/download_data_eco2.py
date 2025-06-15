@@ -91,48 +91,50 @@ def upload_to_snowflake():
     snowflake_hook.run(f"USE SCHEMA {conn_params['schema']}")
 
     create_table_sql = f"""
-    CREATE OR REPLACE TABLE eco2_data (
-    "Périmètre" VARCHAR,
-    "Nature" VARCHAR,
-    "Date" DATE,
-    "Heures" TIME,
-    "Consommation" NUMBER,
-    "Prévision J-1" NUMBER,
-    "Prévision J" NUMBER,
-    "Fioul" NUMBER,
-    "Charbon" NUMBER,
-    "Gaz" NUMBER,
-    "Nucléaire" NUMBER,
-    "Eolien" NUMBER,
-    "Solaire" NUMBER,
-    "Hydraulique" NUMBER,
-    "Pompage" NUMBER,
-    "Bioénergies" NUMBER,
-    "Ech. physiques" NUMBER,
-    "Taux de Co2" NUMBER,
-    "Ech. comm. Angleterre" NUMBER,
-    "Ech. comm. Espagne" NUMBER,
-    "Ech. comm. Italie" NUMBER,
-    "Ech. comm. Suisse" NUMBER,
-    "Ech. comm. Allemagne-Belgique" NUMBER,
-    "Fioul - TAC" NUMBER,
-    "Fioul - Cogén." NUMBER,
-    "Fioul - Autres" NUMBER,
-    "Gaz - TAC" NUMBER,
-    "Gaz - Cogén." NUMBER,
-    "Gaz - CCG" NUMBER,
-    "Gaz - Autres" NUMBER,
-    "Hydraulique - Fil de l’eau + éclusée" NUMBER,
-    "Hydraulique - Lacs" NUMBER,
-    "Hydraulique - STEP turbinage" NUMBER,
-    "Bioénergies - Déchets" NUMBER,
-    "Bioénergies - Biomasse" NUMBER,
-    "Bioénergies - Biogaz" NUMBER,
-    "Stockage batterie" NUMBER,
-    "Déstockage batterie" NUMBER,
-    "Eolien terrestre" NUMBER,
-    "Eolien offshore" NUMBER,
-    "Consommation corrigée" NUMBER); """
+ CREATE OR REPLACE TABLE eco2_data (
+    PERIMETRE VARCHAR,
+    NATURE VARCHAR,
+    DATE DATE,
+    HEURES TIME,
+    CONSOMMATION NUMBER,
+    PREVISION_J_1 NUMBER,
+    PREVISION_J NUMBER,
+    FIOUL NUMBER,
+    CHARBON NUMBER,
+    GAZ NUMBER,
+    NUCLEAIRE NUMBER,
+    EOLIEN NUMBER,
+    SOLAIRE NUMBER,
+    HYDRAULIQUE NUMBER,
+    POMPAGE NUMBER,
+    BIOENERGIES NUMBER,
+    ECH_PHYSIQUES NUMBER,
+    TAUX_DE_CO2 NUMBER,
+    ECH_COMM_ANGLETERRE NUMBER,
+    ECH_COMM_ESPAGNE NUMBER,
+    ECH_COMM_ITALIE NUMBER,
+    ECH_COMM_SUISSE NUMBER,
+    ECH_COMM_ALLEMAGNE_BELGIQUE NUMBER,
+    FIOUL_TAC NUMBER,
+    FIOUL_COGEN NUMBER,
+    FIOUL_AUTRES NUMBER,
+    GAZ_TAC NUMBER,
+    GAZ_COGEN NUMBER,
+    GAZ_CCG NUMBER,
+    GAZ_AUTRES NUMBER,
+    HYDRO_FDE NUMBER,
+    HYDRO_LACS NUMBER,
+    HYDRO_STEP NUMBER,
+    BIO_DECHETS NUMBER,
+    BIO_BIOMASSE NUMBER,
+    BIO_BIOGAZ NUMBER,
+    STOCKAGE_BATTERIE NUMBER,
+    DESTOCKAGE_BATTERIE NUMBER,
+    EOLIEN_TERRESTRE NUMBER,
+    EOLIEN_OFFSHORE NUMBER,
+    CONSOMMATION_CORRIGEE NUMBER
+);
+"""
     
     snowflake_hook.run(create_table_sql)
     print("Table crée avec succès dans Snowflake.")
@@ -145,16 +147,9 @@ def upload_to_snowflake():
     FROM (SELECT $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, 
     $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, $36, $37, $38, 
     $39, $40, $41 FROM @RTE_STAGE/eCO2mix_RTE_En-cours-TR.csv )
-    FILE_FORMAT = (
-        TYPE = 'CSV',
-        SKIP_HEADER = 1,
-        FIELD_DELIMITER = '\t',
-        TRIM_SPACE = TRUE,
-        FIELD_OPTIONALLY_ENCLOSED_BY = '"',
-        REPLACE_INVALID_CHARACTERS = TRUE
-    )
+    FILE_FORMAT = (TYPE = 'CSV', SKIP_HEADER = 1, FIELD_DELIMITER = '\t', TRIM_SPACE = TRUE, FIELD_OPTIONALLY_ENCLOSED_BY = '"', REPLACE_INVALID_CHARACTERS = TRUE)
     FORCE = TRUE
-    ON_ERROR = 'CONTINUE';    """
+    ON_ERROR = 'CONTINUE';"""
     snowflake_hook.run(copy_query)
     print("Données insérées avec succès dans Snowflake.")
 default_args = { "owner": "airflow", "start_date": datetime(2025, 3, 20), "retries": 0,}
