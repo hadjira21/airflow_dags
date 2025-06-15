@@ -44,7 +44,7 @@ def upload_to_snowflake():
     )
     print("Upload vers Snowflake terminé avec succès.")
 
-default_args = {"owner": "airflow", "start_date": datetime(2020, 3, 20), "retries": 0,}
+default_args = {"owner": "airflow", "start_date": datetime(2025, 06, 14), "retries": 0,}
 dag = DAG( "download_and_process_electrique_data", default_args=default_args, schedule_interval="@daily", catchup=False,)
 download_task = PythonOperator( task_id="download_csv_data", python_callable=download_data, dag=dag, )
 read_task = PythonOperator(task_id="read_csv_data", python_callable=read_data, dag=dag,)
