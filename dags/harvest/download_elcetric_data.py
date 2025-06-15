@@ -7,7 +7,7 @@ import pandas as pd
 import os
 
 DATA_DIR = "/opt/airflow/data"
-CSV_FILE = os.path.join(DATA_DIR, "electrique_commune.csv")
+CSV_FILE = os.path.join(DATA_DIR, "electric_data.csv")
 
 def download_data():
     os.makedirs(DATA_DIR, exist_ok=True)
@@ -30,17 +30,13 @@ def read_data():
         print(f"Erreur lors de la lecture du fichier CSV : {e}")
 
 def upload_to_snowflake():
-    conn_params = {'user': 'HADJIRA25', 'password' : '42XCDpmzwMKxRww', 'account': 'TRMGRRV-JN45028',
-    'warehouse': 'COMPUTE_WH', 'database': 'BRONZE',  'schema': "ENEDIS" }
+    conn_params = {'user': 'HADJIRA25', 'password' : '42XCDpmzwMKxRww', 'account': 'TRMGRRV-JN45028','warehouse': 'COMPUTE_WH', 'database': 'BRONZE',  'schema': "ENEDIS" }
     snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_conn', **conn_params)
 
     CSV_FILE = "/opt/airflow/data/electric_data.csv"
     df = pd.read_csv(CSV_FILE, encoding='ISO-8859-1', delimiter=';')
     rows = df.where(pd.notnull(df), None).values.tolist()
-    snowflake_hook.insert_rows(
-        table='electric_data',
-        rows=rows,
-        commit_every=1000
+    snowflake_hook.insert_rows(table='electric_data', rows=rows, commit_every=1000
     )
     print("Upload vers Snowflake terminé avec succès.")
 
