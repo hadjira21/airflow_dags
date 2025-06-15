@@ -37,7 +37,7 @@ def upload_to_snowflake():
     hook = SnowflakeHook(snowflake_conn_id="snowflake_conn", **conn_params)
 
     table_name = "electric_data"
-    stage_name = "ENDIS_STAGE"  # Assure-toi que ce stage existe dans Snowflake
+    stage_name = "ENEDIS_STAGE"  # Assure-toi que ce stage existe dans Snowflake
 
     conn = hook.get_conn()
     cursor = conn.cursor()
