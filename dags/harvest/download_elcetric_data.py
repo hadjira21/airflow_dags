@@ -1,10 +1,10 @@
-from airflow import DAG
-from airflow.operators.python import PythonOperator
-from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
+from airflow import DAG # type: ignore
+from airflow.operators.python import PythonOperator # type: ignore
+from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook # type: ignore
 from datetime import datetime
-import os
 import subprocess
 import pandas as pd
+import os
 
 DATA_DIR = "/opt/airflow/data"
 CSV_FILE = os.path.join(DATA_DIR, "electrique_commune.csv")
@@ -44,7 +44,7 @@ def upload_to_snowflake():
     )
     print("Upload vers Snowflake terminé avec succès.")
 
-default_args = {"owner": "airflow", "start_date": datetime(2025, 06, 14), "retries": 0,}
+default_args = { "owner": "airflow", "start_date": datetime(2025, 3, 20), "retries": 0,}
 dag = DAG( "download_and_process_electrique_data", default_args=default_args, schedule_interval="@daily", catchup=False,)
 download_task = PythonOperator( task_id="download_csv_data", python_callable=download_data, dag=dag, )
 read_task = PythonOperator(task_id="read_csv_data", python_callable=read_data, dag=dag,)
