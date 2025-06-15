@@ -94,7 +94,7 @@ def upload_to_snowflake():
     CREATE OR REPLACE TABLE eco2_data (
         "Périmètre" VARCHAR,
         "Nature" VARCHAR,
-        "Date" VARCHAR,
+        "Date" Date,
         "Heures" VARCHAR,
         "Consommation" VARCHAR,
         "Prévision J-1" VARCHAR,
