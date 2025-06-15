@@ -93,20 +93,53 @@ def load_to_snowflake():
     conn = hook.get_conn()
     cursor = conn.cursor()
     local_csv_path = os.path.join(EXTRACTED_DIR, "eCO2mix_RTE_En-cours-TR.csv")
+
     if not os.path.exists(local_csv_path):
         raise FileNotFoundError(f"CSV introuvable : {local_csv_path}")
 
+    # Lire le CSV pour en extraire les colonnes et types
+    df = pd.read_csv(local_csv_path, delimiter=";", encoding="utf-8")
 
-    put_sql = f""" PUT file://{local_csv_path} @RTE_STAGE OVERWRITE = TRUE;  """
+    # Map des types pandas -> Snowflake
+    type_map = {
+        "int64": "NUMBER",
+        "float64": "FLOAT",
+        "object": "VARCHAR",
+        "datetime64[ns]": "TIMESTAMP_NTZ"
+    }
+
+    columns_ddl = []
+    for col in df.columns:
+        dtype = str(df[col].dtype)
+        snowflake_type = type_map.get(dtype, "VARCHAR")
+        col_clean = col.replace(" ", "_").replace("-", "_").upper()
+        columns_ddl.append(f'"{col_clean}" {snowflake_type}')
+
+    create_table_sql = f"""
+        CREATE TABLE IF NOT EXISTS BRONZE.RTE.ECO2MIX (
+            {', '.join(columns_ddl)}
+        );
+    """
+
+    # 1. Créer la table
+    cursor.execute(create_table_sql)
+    print("Table BRONZE.RTE.ECO2MIX créée (ou déjà existante).")
+
+    # 2. Charger le fichier CSV dans un stage
+    put_sql = f"PUT file://{local_csv_path} @RTE_STAGE OVERWRITE = TRUE;"
     cursor.execute(put_sql)
     print(f"Fichier {local_csv_path} chargé dans le stage RTE_STAGE.")
+
+    # 3. COPY INTO vers la table
     copy_sql = f"""
         COPY INTO BRONZE.RTE.ECO2MIX
         FROM @RTE_STAGE/eCO2mix_RTE_En-cours-TR.csv
         FILE_FORMAT = (TYPE = 'CSV' FIELD_DELIMITER = ';' SKIP_HEADER = 1 FIELD_OPTIONALLY_ENCLOSED_BY = '"')
-        ON_ERROR = 'CONTINUE';    """
+        ON_ERROR = 'CONTINUE';
+    """
     cursor.execute(copy_sql)
     print("Données copiées dans la table BRONZE.RTE.ECO2MIX.")
+
     cursor.close()
     conn.close()
     
