@@ -29,16 +29,71 @@ def read_data():
     except Exception as e:
         print(f"Erreur lors de la lecture du fichier CSV : {e}")
 
+# def upload_to_snowflake():
+#     conn_params = {'user': 'HADJIRA25', 'password' : '42XCDpmzwMKxRww', 'account': 'TRMGRRV-JN45028','warehouse': 'COMPUTE_WH', 'database': 'BRONZE',  'schema': "ENEDIS" }
+#     snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_conn', **conn_params)
+
+#     CSV_FILE = "/opt/airflow/data/electric_data.csv"
+#     df = pd.read_csv(CSV_FILE, encoding='ISO-8859-1', delimiter=';')
+#     rows = df.where(pd.notnull(df), None).values.tolist()
+#     snowflake_hook.insert_rows(table='electric_data', rows=rows, commit_every=1000
+#     )
+#     print("Upload vers Snowflake terminé avec succès.")
+
+import pandas as pd
+import os
+from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
+
 def upload_to_snowflake():
-    conn_params = {'user': 'HADJIRA25', 'password' : '42XCDpmzwMKxRww', 'account': 'TRMGRRV-JN45028','warehouse': 'COMPUTE_WH', 'database': 'BRONZE',  'schema': "ENEDIS" }
+    # Connexion
+    conn_params = {
+        'user': 'HADJIRA25',
+        'password': '42XCDpmzwMKxRww',
+        'account': 'TRMGRRV-JN45028',
+        'warehouse': 'COMPUTE_WH',
+        'database': 'BRONZE',
+        'schema': 'ENEDIS'
+    }
     snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_conn', **conn_params)
 
     CSV_FILE = "/opt/airflow/data/electric_data.csv"
-    df = pd.read_csv(CSV_FILE, encoding='ISO-8859-1', delimiter=';')
+    table_name = 'electric_data'
+
+    # Lire le CSV
+    df = pd.read_csv(CSV_FILE, encoding='ISO-8859-1', delimiter=';', low_memory=False)
+
+    # Générer dynamiquement les types SQL à partir de df.dtypes
+    dtype_mapping = {
+        'object': 'VARCHAR',
+        'float64': 'FLOAT',
+        'int64': 'INT',
+        'bool': 'BOOLEAN',
+        'datetime64[ns]': 'TIMESTAMP'
+    }
+
+    columns_sql = []
+    for col in df.columns:
+        col_type = dtype_mapping.get(str(df[col].dtype), 'VARCHAR')
+        safe_col = col.replace(" ", "_").replace("-", "_").upper()
+        columns_sql.append(f'"{safe_col}" {col_type}')
+
+    create_sql = f'CREATE TABLE IF NOT EXISTS {table_name} ({", ".join(columns_sql)});'
+
+    conn = snowflake_hook.get_conn()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(create_sql)
+        print(f"Table `{table_name}` créée avec succès.")
+    finally:
+        cursor.close()
+
+    df.columns = [col.replace(" ", "_").replace("-", "_").upper() for col in df.columns]
     rows = df.where(pd.notnull(df), None).values.tolist()
-    snowflake_hook.insert_rows(table='electric_data', rows=rows, commit_every=1000
-    )
+
+    # Insérer les données
+    snowflake_hook.insert_rows(table=table_name.upper(), rows=rows, commit_every=1000)
     print("Upload vers Snowflake terminé avec succès.")
+
 
 default_args = { "owner": "airflow", "start_date": datetime(2025, 3, 20), "retries": 0,}
 dag = DAG( "download_and_process_electrique_data", default_args=default_args, schedule_interval="@daily", catchup=False,)
