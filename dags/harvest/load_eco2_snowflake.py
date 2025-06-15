@@ -46,27 +46,15 @@ import logging
 
 #     snowflake_hook.run(copy_query)
 
-
-def upload_to_snowflake(**kwargs):
-    
+def upload_to_snowflake():
     conn_params = {'user': 'HADJIRA25', 'password' : '42XCDpmzwMKxRww', 'account': 'TRMGRRV-JN45028',
     'warehouse': 'COMPUTE_WH', 'database': 'BRONZE',  'schema': "RTE" }
-    file_path = '/opt/airflow/data/eCO2mix_RTE_En-cours-TR/eCO2mix_RTE_En-cours-TR.csv'
-    table_name = 'ECO2MIX_DATA'
-    stage_name = 'RTE_STAGE'
-    hook = SnowflakeHook(snowflake_conn_id="snowflake_conn", **conn_params)
-    conn = hook.get_conn()
-    cursor = conn.cursor()
-    cursor.execute("SELECT CURRENT_DATABASE(), CURRENT_SCHEMA()")
-    database, schema = cursor.fetchone()
-    cursor.close()
+    snowflake_hook = SnowflakeHook( snowflake_conn_id='snowflake_conn', **conn_params)
+    snowflake_hook.run(f"USE DATABASE {conn_params['database']}")
+    snowflake_hook.run(f"USE SCHEMA {conn_params['schema']}")
 
-    full_table_name = f'{database}.{schema}.{table_name}'
-    full_stage_name = f'{database}.{schema}.{stage_name}'
-
-    # Création de la table
     create_table_sql = f"""
-    CREATE OR REPLACE TABLE {full_table_name} (
+    CREATE OR REPLACE TABLE eco2_data (
         "Périmètre" VARCHAR,
         "Nature" VARCHAR,
         "Date" VARCHAR,
@@ -110,24 +98,20 @@ def upload_to_snowflake(**kwargs):
         "Consommation corrigée" VARCHAR
     );
     """
-    hook.run(create_table_sql)
-    logging.info(f"📦 Table {full_table_name} créée (ou remplacée).")
-
-    # PUT dans le stage
-    put_command = f"PUT file://{file_path} @{full_stage_name} AUTO_COMPRESS=FALSE"
-    hook.run(put_command)
-    logging.info(f"📤 Fichier uploadé sur le stage {full_stage_name}")
-
-    # COPY dans la table
+    snowflake_hook.run(create_table_sql)
+    print("Table crée avec succès dans Snowflake.")
+    file_path = '/opt/airflow/data/eCO2mix_RTE_En-cours-TR/eCO2mix_RTE_En-cours-TR.csv'
+    stage_name = 'RTE_STAGE'
+    put_command = f"PUT file://{file_path} @{stage_name}"
+    snowflake_hook.run(put_command)
     copy_query = f"""
-    COPY INTO {full_table_name}
+    COPY INTO eco2_data
     FROM (
         SELECT $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, 
                $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, $36, $37, $38, 
                $39, $40, $41
-        FROM @{full_stage_name}
+        FROM @RTE_STAGE/eCO2mix_RTE_En-cours-TR.csv
     )
-    FILES = ('/opt/airflow/data/eCO2mix_RTE_En-cours-TR/eCO2mix_RTE_En-cours-TR.csv')
     FILE_FORMAT = (
         TYPE = 'CSV',
         SKIP_HEADER = 1,
@@ -139,8 +123,8 @@ def upload_to_snowflake(**kwargs):
     FORCE = TRUE
     ON_ERROR = 'ABORT_STATEMENT';
     """
-    hook.run(copy_query)
-    logging.info("✅ Données copiées dans la table Snowflake.")
+    snowflake_hook.run(copy_query)
+    print("Données insérées avec succès dans Snowflake.")
 
 
 default_args = {'owner': 'airflow', 'retries': 1,}
