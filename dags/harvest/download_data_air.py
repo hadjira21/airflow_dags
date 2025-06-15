@@ -15,21 +15,27 @@ SNOWFLAKE_SCHEMA = 'ATMOSUD'
 SNOWFLAKE_TABLE = 'ATMOSUD_DATA'
 SNOWFLAKE_STAGE = 'ATMOSUD_STAGE'
 
+# Date de début pour le filtre - à modifier selon vos besoins
+START_DATE = "2024-01-01" 
+
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
-    'start_date': datetime(2023, 1, 1),
+    'start_date': datetime(2024, 1, 1),
     'retries': 1,
     'retry_delay': timedelta(minutes=5)
 }
 
-def fetch_atmosud_data():
-    """Récupère les données depuis l'API AtmoSud"""
+def fetch_atmosud_data(**kwargs):
+    """Récupère les données depuis l'API AtmoSud à partir d'une date donnée"""
+    execution_date = kwargs.get('execution_date')
+    
     endpoint = "mesures"
     params = {
         'size': 10000,  
         'page': 1,
-        'sort': 'date_debut,asc'
+        'sort': 'date_debut,asc',
+        'date_debut': f'gte:{START_DATE}'  # Filtre pour les dates >= START_DATE
     }
     
     try:
@@ -37,7 +43,7 @@ def fetch_atmosud_data():
         response.raise_for_status()
         
         data = response.json()
-        print(f"Récupéré {len(data.get('data', []))} enregistrements")
+        print(f"Récupéré {len(data.get('data', []))} enregistrements depuis {START_DATE}")
         
         # Convertir en DataFrame
         df = pd.json_normalize(data['data'])
@@ -105,9 +111,9 @@ def process_and_upload(**kwargs):
         cursor.execute(copy_sql)
         
         # Vérification
-        cursor.execute(f"SELECT COUNT(*) FROM {SNOWFLAKE_DATABASE}.{SNOWFLAKE_SCHEMA}.{SNOWFLAKE_TABLE}")
+        cursor.execute(f"SELECT COUNT(*) FROM {SNOWFLAKE_DATABASE}.{SNOWFLAKE_SCHEMA}.{SNOWFLAKE_TABLE} WHERE DATE_DEBUT >= '{START_DATE}'")
         count = cursor.fetchone()[0]
-        print(f"✅ {count} enregistrements chargés avec succès")
+        print(f"✅ {count} enregistrements chargés avec succès depuis {START_DATE}")
         
     except Exception as e:
         print(f"❌ Erreur Snowflake: {str(e)}")
@@ -123,7 +129,7 @@ def process_and_upload(**kwargs):
 dag = DAG(
     'atmosud_air_quality_pipeline',
     default_args=default_args,
-    description='Récupère les données de qualité de l\'air depuis AtmoSud',
+    description='Récupère les données de qualité de l\'air depuis AtmoSud à partir d\'une date donnée',
     schedule_interval='@daily',
     catchup=False
 )
@@ -132,6 +138,7 @@ dag = DAG(
 fetch_data_task = PythonOperator(
     task_id='fetch_atmosud_data',
     python_callable=fetch_atmosud_data,
+    provide_context=True,  # Nécessaire pour accéder à execution_date
     dag=dag
 )
 
@@ -142,5 +149,4 @@ process_upload_task = PythonOperator(
     dag=dag
 )
 
-# Orchestration
 fetch_data_task >> process_upload_task
