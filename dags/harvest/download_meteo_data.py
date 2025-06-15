@@ -44,20 +44,74 @@ def read_data():
     except Exception as e:
         raise Exception(f" Erreur lecture CSV : {e}")
 
+# def upload_to_snowflake():
+#     conn_params = {'user': 'HADJIRA25', 'password' : '42XCDpmzwMKxRww', 'account': 'TRMGRRV-JN45028', 'warehouse': 'COMPUTE_WH', 'database': 'BRONZE',  'schema': "METEO" }
+#     df = pd.read_csv(CSV_FILE, encoding='ISO-8859-1', delimiter=';')
+#     hook = SnowflakeHook(snowflake_conn_id='snowflake_conn', **conn_params)
+#     engine = hook.get_sqlalchemy_engine()
+#     # Création automatique de la table et insertion via write_pandas
+#     success, nchunks, nrows, _ = write_pandas(
+#     conn=engine.raw_connection(), df=df, table_name="meteo_data", schema=conn_params["schema"], database=conn_params["database"], auto_create_table=True, quote_identifiers=True )
+#     # adding put into stage before 
+#     print(f" Données insérées dans Snowflake : {nrows} lignes")
+
+
+
 def upload_to_snowflake():
-    conn_params = {'user': 'HADJIRA25', 'password' : '42XCDpmzwMKxRww', 'account': 'TRMGRRV-JN45028',
-    'warehouse': 'COMPUTE_WH', 'database': 'BRONZE',  'schema': "METEO" }
+    conn_params = {
+        'user': 'HADJIRA25',
+        'password': '42XCDpmzwMKxRww',
+        'account': 'TRMGRRV-JN45028',
+        'warehouse': 'COMPUTE_WH',
+        'database': 'BRONZE',
+        'schema': 'METEO'
+    }
     df = pd.read_csv(CSV_FILE, encoding='ISO-8859-1', delimiter=';')
 
     hook = SnowflakeHook(snowflake_conn_id='snowflake_conn', **conn_params)
-    engine = hook.get_sqlalchemy_engine()
 
-    # Création automatique de la table et insertion via write_pandas
-    success, nchunks, nrows, _ = write_pandas(
-    conn=engine.raw_connection(), df=df, table_name="meteo_data", schema=conn_params["schema"],
-    database=conn_params["database"], auto_create_table=True, quote_identifiers=True )
+    table_name = "meteo_data"
+    stage_name = "METEO_STAGE"  # Assure-toi que ce stage existe dans Snowflake
 
-    print(f" Données insérées dans Snowflake : {nrows} lignes")
+    # Connexion directe
+    conn = hook.get_conn()
+    cursor = conn.cursor()
+
+    # Générer la table si elle n'existe pas (basé sur df)
+    dtype_mapping = {
+        'object': 'VARCHAR',
+        'float64': 'FLOAT',
+        'int64': 'INT',
+        'bool': 'BOOLEAN',
+        'datetime64[ns]': 'TIMESTAMP'
+    }
+    columns_sql = []
+    for col in df.columns:
+        col_type = dtype_mapping.get(str(df[col].dtype), 'VARCHAR')
+        safe_col = col.replace(" ", "_").replace("-", "_").upper()
+        columns_sql.append(f'"{safe_col}" {col_type}')
+    create_sql = f'CREATE TABLE IF NOT EXISTS {table_name} ({", ".join(columns_sql)});'
+
+    try:
+        cursor.execute(create_sql)
+        print(f"Table `{table_name}` créée ou existante.")
+    finally:
+        cursor.close()
+
+    # PUT du fichier CSV dans le stage
+    put_command = f"PUT file://{CSV_FILE} @{stage_name} OVERWRITE=TRUE"
+    hook.run(put_command)
+    print(f"Fichier {CSV_FILE} chargé dans le stage {stage_name}.")
+
+    # COPY INTO pour insérer les données dans la table
+    copy_query = f"""
+        COPY INTO {table_name}
+        FROM @{stage_name}/{os.path.basename(CSV_FILE)}
+        FILE_FORMAT = (TYPE = 'CSV' FIELD_OPTIONALLY_ENCLOSED_BY = '\"' FIELD_DELIMITER = ';' SKIP_HEADER = 1)
+        ON_ERROR = 'CONTINUE';
+    """
+    hook.run(copy_query)
+    print(f"Données insérées dans la table {table_name} via COPY INTO.")
 
 default_args = {"owner": "airflow", "start_date": datetime(2024, 3, 20), "retries": 0, }
 dag = DAG("meteo_auto_to_snowflake", default_args=default_args, schedule_interval="@daily", catchup=False,
