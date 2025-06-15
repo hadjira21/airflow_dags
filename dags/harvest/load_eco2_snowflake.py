@@ -112,7 +112,7 @@ def upload_to_snowflake():
     FILE_FORMAT = (
         TYPE = 'CSV',
         SKIP_HEADER = 1,
-        FIELD_DELIMITER = '/t',
+        FIELD_DELIMITER = '\t',
         TRIM_SPACE = TRUE,
         FIELD_OPTIONALLY_ENCLOSED_BY = '"',
         REPLACE_INVALID_CHARACTERS = TRUE
