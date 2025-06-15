@@ -154,8 +154,7 @@ def upload_to_snowflake():
         REPLACE_INVALID_CHARACTERS = TRUE
     )
     FORCE = TRUE
-    ON_ERROR = 'ABORT_STATEMENT';
-    """
+    ON_ERROR = 'CONTINUE';    """
     snowflake_hook.run(copy_query)
     print("Données insérées avec succès dans Snowflake.")
 default_args = { "owner": "airflow", "start_date": datetime(2025, 3, 20), "retries": 0,}
