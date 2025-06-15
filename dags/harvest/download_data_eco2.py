@@ -87,74 +87,43 @@ def transform_data():
 
 
 def load_to_snowflake():
-    """Charge les données transformées dans Snowflake via PUT + COPY INTO"""
-    hook = SnowflakeHook(snowflake_conn_id='snowflake_conn')
+    conn_params = {'user': 'HADJIRA25', 'password' : '42XCDpmzwMKxRww', 'account': 'TRMGRRV-JN45028',
+    'warehouse': 'COMPUTE_WH', 'database': 'BRONZE',  'schema': "RTE" }
+    hook = SnowflakeHook(snowflake_conn_id="snowflake_conn", **conn_params)
     conn = hook.get_conn()
     cursor = conn.cursor()
-
-    # 1. Charger le fichier CSV dans un stage Snowflake
     local_csv_path = os.path.join(EXTRACTED_DIR, "eCO2mix_RTE_En-cours-TR.csv")
     if not os.path.exists(local_csv_path):
         raise FileNotFoundError(f"CSV introuvable : {local_csv_path}")
 
-    put_sql = f"""
-        PUT file://{local_csv_path} @RTE_STAGE OVERWRITE = TRUE;
-    """
+
+    put_sql = f""" PUT file://{local_csv_path} @RTE_STAGE OVERWRITE = TRUE;  """
     cursor.execute(put_sql)
     print(f"Fichier {local_csv_path} chargé dans le stage RTE_STAGE.")
-
-    # 2. Copier les données dans la table
     copy_sql = f"""
         COPY INTO BRONZE.RTE.ECO2MIX
         FROM @RTE_STAGE/eCO2mix_RTE_En-cours-TR.csv
         FILE_FORMAT = (TYPE = 'CSV' FIELD_DELIMITER = ';' SKIP_HEADER = 1 FIELD_OPTIONALLY_ENCLOSED_BY = '"')
-        ON_ERROR = 'CONTINUE';
-    """
+        ON_ERROR = 'CONTINUE';    """
     cursor.execute(copy_sql)
     print("Données copiées dans la table BRONZE.RTE.ECO2MIX.")
-
     cursor.close()
     conn.close()
-# Définition du DAG
-default_args = {
-    "owner": "airflow",
-    "start_date": datetime(2025, 3, 20),
-    "retries": 0,
-}
+    
+default_args = { "owner": "airflow", "start_date": datetime(2025, 3, 20), "retries": 0,}
 
-dag = DAG(
-    "download_data_eco2mix",
-    default_args=default_args,
-    schedule_interval="@daily",
-    catchup=False,
-)
-
-# Définir les chemins des fichiers
+dag = DAG("download_data_eco2mix", default_args=default_args, schedule_interval="@daily", catchup=False,)
 xls_file_path = os.path.join(EXTRACTED_DIR, "eCO2mix_RTE_En-cours-TR.xls")
 csv_file_path = os.path.join(EXTRACTED_DIR, "eCO2mix_RTE_En-cours-TR.csv")
 
-# Définition des tâches
-download_task = PythonOperator(
-    task_id="download_data_eco2",
-    python_callable=download_data,
-    dag=dag,
-)
+download_task = PythonOperator(task_id="download_data_eco2", python_callable=download_data,  dag=dag,)
 
-unzip_task = PythonOperator(
-    task_id="unzip_data",
-    python_callable=unzip_data,
-    dag=dag,
-)
+unzip_task = PythonOperator( task_id="unzip_data", python_callable=unzip_data, dag=dag,)
 
 rename_task = PythonOperator(task_id='rename_xls_to_csv', python_callable=rename_xls_to_csv,op_args=[xls_file_path, csv_file_path],dag=dag,)
 
 read_task = PythonOperator(task_id="read_data", python_callable=read_data, dag=dag,)
 
-transform_task = PythonOperator(
-    task_id="transform_data",    python_callable=transform_data,  dag=dag,)
-load_task = PythonOperator(
-    task_id="load_to_snowflake",
-    python_callable=load_to_snowflake,
-    dag=dag,
-)
+transform_task = PythonOperator(task_id="transform_data",    python_callable=transform_data,  dag=dag,)
+load_task = PythonOperator(task_id="load_to_snowflake", python_callable=load_to_snowflake, dag=dag,)
 download_task >> unzip_task >> rename_task >> read_task >> transform_task >> load_task
