@@ -6,6 +6,7 @@ from datetime import datetime
 import os
 import subprocess
 import pandas as pd
+from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook # type: ignore
 
 DATA_DIR = "/opt/airflow/data"
 GZ_FILE = os.path.join(DATA_DIR, "meteo.csv.gz")
