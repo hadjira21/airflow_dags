@@ -30,14 +30,8 @@ def read_data():
         print(f"Erreur lors de la lecture du fichier CSV : {e}")
 
 def upload_to_snowflake():
-    conn_params = {
-        'user': 'HADJIRA25',
-        'password': '42XCDpmzwMKxRww',
-        'account': 'TRMGRRV-JN45028',
-        'warehouse': 'COMPUTE_WH',
-        'database': 'BRONZE',
-        'schema': 'ENDIS'
-    }
+    conn_params = {'user': 'HADJIRA25', 'password' : '42XCDpmzwMKxRww', 'account': 'TRMGRRV-JN45028',
+    'warehouse': 'COMPUTE_WH', 'database': 'BRONZE',  'schema': "ENEDIS" }
     df = pd.read_csv(CSV_FILE, encoding='ISO-8859-1', delimiter=';')
 
     hook = SnowflakeHook(snowflake_conn_id="snowflake_conn", **conn_params)
