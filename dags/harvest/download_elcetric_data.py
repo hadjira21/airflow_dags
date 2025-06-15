@@ -5,7 +5,9 @@ from datetime import datetime
 import subprocess
 import pandas as pd
 import os
-
+import pandas as pd
+import os
+from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 DATA_DIR = "/opt/airflow/data"
 CSV_FILE = os.path.join(DATA_DIR, "electric_data.csv")
 
@@ -29,47 +31,18 @@ def read_data():
     except Exception as e:
         print(f"Erreur lors de la lecture du fichier CSV : {e}")
 
-# def upload_to_snowflake():
-#     conn_params = {'user': 'HADJIRA25', 'password' : '42XCDpmzwMKxRww', 'account': 'TRMGRRV-JN45028','warehouse': 'COMPUTE_WH', 'database': 'BRONZE',  'schema': "ENEDIS" }
-#     snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_conn', **conn_params)
-
-#     CSV_FILE = "/opt/airflow/data/electric_data.csv"
-#     df = pd.read_csv(CSV_FILE, encoding='ISO-8859-1', delimiter=';')
-#     rows = df.where(pd.notnull(df), None).values.tolist()
-#     snowflake_hook.insert_rows(table='electric_data', rows=rows, commit_every=1000
-#     )
-#     print("Upload vers Snowflake terminé avec succès.")
-
-import pandas as pd
-import os
-from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 
 def upload_to_snowflake():
     # Connexion
-    conn_params = {
-        'user': 'HADJIRA25',
-        'password': '42XCDpmzwMKxRww',
-        'account': 'TRMGRRV-JN45028',
-        'warehouse': 'COMPUTE_WH',
-        'database': 'BRONZE',
-        'schema': 'ENEDIS'
-    }
+    conn_params = {'user': 'HADJIRA25', 'password': '42XCDpmzwMKxRww', 'account': 'TRMGRRV-JN45028', 'warehouse': 'COMPUTE_WH', 'database': 'BRONZE', 'schema': 'ENEDIS'}
     snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_conn', **conn_params)
 
     CSV_FILE = "/opt/airflow/data/electric_data.csv"
     table_name = 'electric_data'
-
-    # Lire le CSV
     df = pd.read_csv(CSV_FILE, encoding='ISO-8859-1', delimiter=';', low_memory=False)
 
     # Générer dynamiquement les types SQL à partir de df.dtypes
-    dtype_mapping = {
-        'object': 'VARCHAR',
-        'float64': 'FLOAT',
-        'int64': 'INT',
-        'bool': 'BOOLEAN',
-        'datetime64[ns]': 'TIMESTAMP'
-    }
+    dtype_mapping = {  'object': 'VARCHAR', 'float64': 'FLOAT', 'int64': 'INT',  'bool': 'BOOLEAN', 'datetime64[ns]': 'TIMESTAMP' }
 
     columns_sql = []
     for col in df.columns:
@@ -86,11 +59,8 @@ def upload_to_snowflake():
         print(f"Table `{table_name}` créée avec succès.")
     finally:
         cursor.close()
-
     df.columns = [col.replace(" ", "_").replace("-", "_").upper() for col in df.columns]
     rows = df.where(pd.notnull(df), None).values.tolist()
-
-    # Insérer les données
     snowflake_hook.insert_rows(table=table_name.upper(), rows=rows, commit_every=1000)
     print("Upload vers Snowflake terminé avec succès.")
 
