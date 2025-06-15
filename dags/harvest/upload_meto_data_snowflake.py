@@ -9,14 +9,14 @@ from datetime import datetime
 # Fonction d'insertion dans Snowflake
 def upload_to_snowflake():
     conn_params = {
-        'user': 'HADJIRABK',  
+        'user': 'HADJIRA25',  
         'password' : '42XCDpmzwMKxRww',
-        'account': 'OKVCAFF-IE00559',
+        'account': 'TRMGRRV-JN45028',
         'warehouse': 'COMPUTE_WH', 
         'database': 'BRONZE', 
         'schema': "METEO"      
     }
-
+    # OKVCAFF-IE00559 
     # Connexion à Snowflake
     snowflake_hook = SnowflakeHook(
         snowflake_conn_id='snowflake_conn', 

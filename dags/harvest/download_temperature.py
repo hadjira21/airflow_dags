@@ -7,7 +7,7 @@ import pandas as pd
 import os
 
 DATA_DIR = "/opt/airflow/data"
-CSV_FILE = os.path.join(DATA_DIR, "temperature_radiation.csv")
+CSV_FILE = os.path.join(DATA_DIR, "temperature_radiation_data.csv")
 
 def download_data():
     """Télécharge le fichier CSV depuis l'URL fournie."""
@@ -43,6 +43,23 @@ def upload_to_snowflake():
         Diff_Temp_Realisee_Normale_C FLOAT,  Pseudo_rayonnement FLOAT,
         Annee INT,Mois INT, Jour INT, Annee_Mois_Jour STRING); """
     snowflake_hook.run(create_table_sql)
+    
+    file_path = '/opt/airflow/data/temperature_radiation_data.csv'
+    stage_name = 'ENEDIS_STAGE'
+
+    # Utiliser la commande PUT pour charger le fichier dans le stage
+    put_command = f"PUT file://{file_path} @{stage_name}"
+    snowflake_hook.run(put_command)
+    
+    # Copier les données depuis le stage dans la table Snowflake
+    copy_query = """ COPY INTO temperature_data
+    FROM @ENEDIS_STAGE/temperature_radiation_data.csv
+    FILE_FORMAT = (TYPE = 'CSV' FIELD_OPTIONALLY_ENCLOSED_BY = '"', FIELD_DELIMITER = ';')
+    ON_ERROR = 'CONTINUE'; """
+    snowflake_hook.run(copy_query)
+
+    print("Données insérées avec succès dans Snowflake.")
+
 
 default_args = { "owner": "airflow", "start_date": datetime(2025, 3, 20), "retries": 0,}
 dag = DAG("download_and_process_temperature_data",description='DAG pour download & upload les données de température et de rayonnement dans Snowflake', default_args=default_args, schedule_interval="@daily", catchup=False,)
