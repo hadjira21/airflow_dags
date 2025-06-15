@@ -151,10 +151,12 @@ dag = DAG(
     start_date=datetime(2025, 6, 1),
     catchup=False,
 )
-load_task = PythonOperator(task_id='upload_to_snowflake',
-        python_callable=upload_to_snowflake,
-        provide_context=True,
-    )
+load_task = PythonOperator(
+    task_id='upload_to_snowflake',
+    python_callable=upload_to_snowflake,
+    provide_context=True,
+    dag=dag  
+)
 
 load_task
 
