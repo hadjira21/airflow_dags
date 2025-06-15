@@ -127,7 +127,7 @@ def upload_to_snowflake(**kwargs):
                $39, $40, $41
         FROM @{full_stage_name}
     )
-    FILES = ('eco2mix_data.csv')
+    FILES = ('/opt/airflow/data/eCO2mix_RTE_En-cours-TR/eCO2mix_RTE_En-cours-TR.csv')
     FILE_FORMAT = (
         TYPE = 'CSV',
         SKIP_HEADER = 1,
@@ -143,11 +143,7 @@ def upload_to_snowflake(**kwargs):
     logging.info("✅ Données copiées dans la table Snowflake.")
 
 
-# Définition du DAG
-default_args = {
-    'owner': 'airflow',
-    'retries': 1,
-}
+default_args = {'owner': 'airflow', 'retries': 1,}
 
 with DAG(
     dag_id='upload_eco2mix_to_snowflake_simple',
@@ -159,8 +155,7 @@ with DAG(
     tags=['eco2mix', 'snowflake'],
 ) as dag:
 
-    load_task = PythonOperator(
-        task_id='load_csv_to_snowflake',
+    load_task = PythonOperator(task_id='load_csv_to_snowflake',
         python_callable=upload_to_snowflake,
         provide_context=True,
     )
