@@ -67,24 +67,15 @@ def upload_to_snowflake():
         'schema': 'METEO'
     }
     df = pd.read_csv(CSV_FILE, encoding='ISO-8859-1', delimiter=';')
-
     hook = SnowflakeHook(snowflake_conn_id='snowflake_conn', **conn_params)
-
+    
     table_name = "meteo_data"
-    stage_name = "METEO_STAGE"  # Assure-toi que ce stage existe dans Snowflake
+    stage_name = "METEO_STAGE"  
 
-    # Connexion directe
     conn = hook.get_conn()
     cursor = conn.cursor()
 
-    # Générer la table si elle n'existe pas (basé sur df)
-    dtype_mapping = {
-        'object': 'VARCHAR',
-        'float64': 'FLOAT',
-        'int64': 'INT',
-        'bool': 'BOOLEAN',
-        'datetime64[ns]': 'TIMESTAMP'
-    }
+    dtype_mapping = {'object': 'VARCHAR', 'float64': 'FLOAT', 'int64': 'INT', 'bool': 'BOOLEAN', 'datetime64[ns]': 'TIMESTAMP' }
     columns_sql = []
     for col in df.columns:
         col_type = dtype_mapping.get(str(df[col].dtype), 'VARCHAR')
@@ -104,12 +95,8 @@ def upload_to_snowflake():
     print(f"Fichier {CSV_FILE} chargé dans le stage {stage_name}.")
 
     # COPY INTO pour insérer les données dans la table
-    copy_query = f"""
-        COPY INTO {table_name}
-        FROM @{stage_name}/{os.path.basename(CSV_FILE)}
-        FILE_FORMAT = (TYPE = 'CSV' FIELD_OPTIONALLY_ENCLOSED_BY = '\"' FIELD_DELIMITER = ';' SKIP_HEADER = 1)
-        ON_ERROR = 'CONTINUE';
-    """
+    copy_query = f""" COPY INTO {table_name} FROM @{stage_name}/{os.path.basename(CSV_FILE)}
+        FILE_FORMAT = (TYPE = 'CSV' FIELD_OPTIONALLY_ENCLOSED_BY = '\"' FIELD_DELIMITER = ';' SKIP_HEADER = 1) ON_ERROR = 'CONTINUE'; """
     hook.run(copy_query)
     print(f"Données insérées dans la table {table_name} via COPY INTO.")
 

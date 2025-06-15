@@ -30,21 +30,20 @@ def read_data():
         print(f"Erreur lors de la lecture du fichier CSV : {e}")
 
 def upload_to_snowflake():
-    snowflake_conn_id = os.getenv("SNOWFLAKE_CONN_ID", "snowflake_conn")  # valeur par défaut
-    snowflake_account = os.getenv("SNOWFLAKE_ACCOUNT")
-    snowflake_user = os.getenv("SNOWFLAKE_USER")
-    snowflake_password = os.getenv("SNOWFLAKE_PASSWORD")
-
-    conn_params = {'user': snowflake_user, 'password':snowflake_password, 'account': snowflake_account, 'warehouse': 'COMPUTE_WH',
+    conn_params = {
+        'user': 'HADJIRA25',
+        'password': '42XCDpmzwMKxRww',
+        'account': 'TRMGRRV-JN45028',
+        'warehouse': 'COMPUTE_WH',
         'database': 'BRONZE',
-        'schema': 'METEO'
+        'schema': 'ENDIS'
     }
     df = pd.read_csv(CSV_FILE, encoding='ISO-8859-1', delimiter=';')
 
-    hook = SnowflakeHook(snowflake_conn_id=snowflake_conn_id, **conn_params)
+    hook = SnowflakeHook(snowflake_conn_id="snowflake_conn", **conn_params)
 
-    table_name = "meteo_data"
-    stage_name = "METEO_STAGE"  # Assure-toi que ce stage existe dans Snowflake
+    table_name = "electric_data"
+    stage_name = "ENDIS_STAGE"  # Assure-toi que ce stage existe dans Snowflake
 
     conn = hook.get_conn()
     cursor = conn.cursor()
