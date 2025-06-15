@@ -40,29 +40,39 @@ def upload_to_snowflake():
     CSV_FILE = "/opt/airflow/data/electric_data.csv"
     table_name = 'electric_data'
     df = pd.read_csv(CSV_FILE, encoding='ISO-8859-1', delimiter=';', low_memory=False)
+    hook = SnowflakeHook(snowflake_conn_id='snowflake_conn', **conn_params)
+    engine = hook.get_sqlalchemy_engine()
 
-    # Générer dynamiquement les types SQL à partir de df.dtypes
-    dtype_mapping = {  'object': 'VARCHAR', 'float64': 'FLOAT', 'int64': 'INT',  'bool': 'BOOLEAN', 'datetime64[ns]': 'TIMESTAMP' }
+    # Création automatique de la table et insertion via write_pandas
+    success, nchunks, nrows, _ = write_pandas(
+    conn=engine.raw_connection(), df=df, table_name="electric_data", schema=conn_params["schema"],
+    database=conn_params["database"], auto_create_table=True, quote_identifiers=True )
 
-    columns_sql = []
-    for col in df.columns:
-        col_type = dtype_mapping.get(str(df[col].dtype), 'VARCHAR')
-        safe_col = col.replace(" ", "_").replace("-", "_").upper()
-        columns_sql.append(f'"{safe_col}" {col_type}')
+    print(f" Données insérées dans Snowflake : {nrows} lignes")
+    # # Générer dynamiquement les types SQL à partir de df.dtypes
+    # dtype_mapping = {  'object': 'VARCHAR', 'float64': 'FLOAT', 'int64': 'INT',  'bool': 'BOOLEAN', 'datetime64[ns]': 'TIMESTAMP' }
 
-    create_sql = f'CREATE TABLE IF NOT EXISTS {table_name} ({", ".join(columns_sql)});'
+    # columns_sql = []
+    # for col in df.columns:
+    #     col_type = dtype_mapping.get(str(df[col].dtype), 'VARCHAR')
+    #     safe_col = col.replace(" ", "_").replace("-", "_").upper()
+    #     columns_sql.append(f'"{safe_col}" {col_type}')
 
-    conn = snowflake_hook.get_conn()
-    cursor = conn.cursor()
-    try:
-        cursor.execute(create_sql)
-        print(f"Table `{table_name}` créée avec succès.")
-    finally:
-        cursor.close()
-    df.columns = [col.replace(" ", "_").replace("-", "_").upper() for col in df.columns]
-    rows = df.where(pd.notnull(df), None).values.tolist()
-    snowflake_hook.insert_rows(table=table_name.upper(), rows=rows, commit_every=1000)
-    print("Upload vers Snowflake terminé avec succès.")
+    # create_sql = f'CREATE TABLE IF NOT EXISTS {table_name} ({", ".join(columns_sql)});'
+
+    # conn = snowflake_hook.get_conn()
+    # cursor = conn.cursor()
+    # try:
+    #     cursor.execute(create_sql)
+    #     print(f"Table `{table_name}` créée avec succès.")
+    # finally:
+    #     cursor.close()
+    # df.columns = [col.replace(" ", "_").replace("-", "_").upper() for col in df.columns]
+    # rows = df.where(pd.notnull(df), None).values.tolist()
+    # snowflake_hook.insert_rows(table=table_name.upper(), rows=rows, commit_every=1000)
+    # print("Upload vers Snowflake terminé avec succès.")
+
+
 
 
 default_args = { "owner": "airflow", "start_date": datetime(2025, 3, 20), "retries": 0,}
