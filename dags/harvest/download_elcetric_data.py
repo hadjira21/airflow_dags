@@ -30,16 +30,25 @@ def read_data():
         print(f"Erreur lors de la lecture du fichier CSV : {e}")
 
 def upload_to_snowflake():
-    conn_params = {'user': 'HADJIRABK', 'password' : '42XCDpmzwMKxRww', 'account': 'OKVCAFF-IE00559',
-    'warehouse': 'COMPUTE_WH', 'database': 'BRONZE',  'schema': "ENEDIS" }
-    snowflake_hook = SnowflakeHook( snowflake_conn_id='snowflake_conn', **conn_params)
-    snowflake_hook.run(f"USE DATABASE {conn_params['database']}")
-    snowflake_hook.run(f"USE SCHEMA {conn_params['schema']}")
-    create_table_sql = """CREATE TABLE IF NOT EXISTS electric_data (
-        Horodate STRING, Temp_realisee_lissee_C FLOAT, Temp_normale_lissee_C FLOAT,
-        Diff_Temp_Realisee_Normale_C FLOAT,  Pseudo_rayonnement FLOAT,
-        Annee INT,Mois INT, Jour INT, Annee_Mois_Jour STRING); """
-    snowflake_hook.run(create_table_sql)
+    conn_params = {
+        'user': 'HADJIRABK',
+        'password': '42XCDpmzwMKxRww',
+        'account': 'OKVCAFF-IE00559',
+        'warehouse': 'COMPUTE_WH',
+        'database': 'BRONZE',
+        'schema': 'ENEDIS'
+    }
+    snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_conn', **conn_params)
+
+    CSV_FILE = "/opt/airflow/data/electric_data.csv"
+    df = pd.read_csv(CSV_FILE, encoding='ISO-8859-1', delimiter=';')
+    rows = df.where(pd.notnull(df), None).values.tolist()
+    snowflake_hook.insert_rows(
+        table='electric_data',
+        rows=rows,
+        commit_every=1000
+    )
+    print("Upload vers Snowflake terminé avec succès.")
 
 default_args = {"owner": "airflow", "start_date": datetime(2020, 3, 20), "retries": 0,}
 dag = DAG( "download_and_process_electrique_data", default_args=default_args, schedule_interval="@daily", catchup=False,)
