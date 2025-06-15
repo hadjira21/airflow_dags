@@ -65,7 +65,7 @@ def upload_to_snowflake():
     success, nchunks, nrows, _ = write_pandas(
         conn=engine.raw_connection(),
         df=df,
-        table_name="meteo_data",
+        table_name="meteo_data_test",
         schema=conn_params["schema"],
         database=conn_params["database"],
         auto_create_table=True,
