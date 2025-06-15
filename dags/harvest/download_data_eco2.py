@@ -160,7 +160,11 @@ def upload_to_snowflake():
     print("Données insérées avec succès dans Snowflake.")
 default_args = { "owner": "airflow", "start_date": datetime(2025, 3, 20), "retries": 0,}
 
-dag = DAG("download_data_eco2mix", default_args=default_args, schedule_interval="@daily", catchup=False,)
+dag = DAG("download_data_eco2mix", default_args=default_args, 
+    schedule_interval="@daily",
+    start_date=datetime(2025, 6, 1),
+    catchup=False,
+)
 xls_file_path = os.path.join(EXTRACTED_DIR, "eCO2mix_RTE_En-cours-TR.xls")
 csv_file_path = os.path.join(EXTRACTED_DIR, "eCO2mix_RTE_En-cours-TR.csv")
 
