@@ -44,19 +44,6 @@ def read_data():
     except Exception as e:
         raise Exception(f" Erreur lecture CSV : {e}")
 
-# def upload_to_snowflake():
-#     conn_params = {'user': 'HADJIRA25', 'password' : '42XCDpmzwMKxRww', 'account': 'TRMGRRV-JN45028', 'warehouse': 'COMPUTE_WH', 'database': 'BRONZE',  'schema': "METEO" }
-#     df = pd.read_csv(CSV_FILE, encoding='ISO-8859-1', delimiter=';')
-#     hook = SnowflakeHook(snowflake_conn_id='snowflake_conn', **conn_params)
-#     engine = hook.get_sqlalchemy_engine()
-#     # Création automatique de la table et insertion via write_pandas
-#     success, nchunks, nrows, _ = write_pandas(
-#     conn=engine.raw_connection(), df=df, table_name="meteo_data", schema=conn_params["schema"], database=conn_params["database"], auto_create_table=True, quote_identifiers=True )
-#     # adding put into stage before 
-#     print(f" Données insérées dans Snowflake : {nrows} lignes")
-
-
-
 def upload_to_snowflake():
     conn_params = {'user': 'HADJIRA25', 'password' : '42XCDpmzwMKxRww', 'account': 'TRMGRRV-JN45028',
     'warehouse': 'COMPUTE_WH', 'database': 'BRONZE',  'schema': "METEO" }

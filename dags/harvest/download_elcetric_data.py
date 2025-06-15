@@ -37,19 +37,13 @@ def upload_to_snowflake():
     hook = SnowflakeHook(snowflake_conn_id="snowflake_conn", **conn_params)
 
     table_name = "electric_data"
-    stage_name = "ENEDIS_STAGE"  # Assure-toi que ce stage existe dans Snowflake
+    stage_name = "ENEDIS_STAGE"  
 
     conn = hook.get_conn()
     cursor = conn.cursor()
 
-    # Générer la table si elle n'existe pas (basé sur df)
-    dtype_mapping = {
-        'object': 'VARCHAR',
-        'float64': 'FLOAT',
-        'int64': 'INT',
-        'bool': 'BOOLEAN',
-        'datetime64[ns]': 'TIMESTAMP'
-    }
+    dtype_mapping = {'object': 'VARCHAR', 'float64': 'FLOAT', 'int64': 'INT', 'bool': 'BOOLEAN',
+        'datetime64[ns]': 'TIMESTAMP' }
     columns_sql = []
     for col in df.columns:
         col_type = dtype_mapping.get(str(df[col].dtype), 'VARCHAR')

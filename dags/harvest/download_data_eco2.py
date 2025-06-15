@@ -126,10 +126,6 @@ read_task = PythonOperator(
 )
 
 transform_task = PythonOperator(
-    task_id="transform_data",
-    python_callable=transform_data,
-    dag=dag,
-)
+    task_id="transform_data",    python_callable=transform_data,  dag=dag,)
 
-# Ordre d'exécution
 download_task >> unzip_task >> rename_task >> read_task >> transform_task
