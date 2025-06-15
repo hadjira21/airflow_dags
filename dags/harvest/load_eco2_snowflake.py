@@ -18,7 +18,7 @@ def upload_to_snowflake():
 
     # Chemin du fichier CSV local
     file_path = '/opt/airflow/data/eCO2mix_RTE_En-cours-TR/eCO2mix_RTE_En-cours-TR.csv'
-    stage_name = 'METEO_STAGE'
+    stage_name = 'RTE_STAGE'
 
     # Upload fichier dans stage Snowflake (sans compression)
     put_command = f"PUT file://{file_path} @{stage_name}/eCO2mix_clean.csv.gz AUTO_COMPRESS=TRUE"
