@@ -3,6 +3,10 @@ from airflow.operators.python import PythonOperator
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 import requests
 from datetime import datetime
+import os
+import subprocess
+from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
+import csv
 
 default_args = {
     'owner': 'airflow',
@@ -10,83 +14,62 @@ default_args = {
     'retries': 1,
 }
 
-API_URL = "https://data.ademe.fr/api/explore/v2.1/catalog/datasets/prod-region-annuelle-enr/records?limit=100"
 
-def create_table():
+
+def download_csv_file():
+    url = "https://data.ademe.fr/api/explore/v2.1/catalog/datasets/prod-region-annuelle-enr/exports/csv"
+    local_path = "/opt/airflow/data/prod_region_annuelle_enr.csv"
+
+    os.makedirs(os.path.dirname(local_path), exist_ok=True)
+    response = requests.get(url)
+
+    if response.status_code != 200:
+        raise Exception(f"Échec du téléchargement : {response.status_code}")
+    
+    with open(local_path, "wb") as f:
+        f.write(response.content)
+
+
+
+def load_csv_to_snowflake():
+    file_path = "/opt/airflow/data/prod_region_annuelle_enr.csv"
     conn_params = {'user': 'HADJIRA25', 'password' : '42XCDpmzwMKxRww', 'account': 'TRMGRRV-JN45028',
-    'warehouse': 'INGESTION_WH', 'database': 'BRONZE',  'schema': "RTE" }
-    hook = SnowflakeHook( snowflake_conn_id='snowflake_conn', **conn_params)
-    hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
-    conn = hook.get_conn()
+    'warehouse': 'INGESTION_WH', 'database': 'BRONZE',  'schema': "ENEDIS" }
+    snowflake_hook = SnowflakeHook( snowflake_conn_id='snowflake_conn', **conn_params)
+    conn = snowflake_hook.get_conn()
     cursor = conn.cursor()
 
-    create_sql = """
-    CREATE OR REPLACE TABLE STAGING.PROD_REGION_ENR (
-        annee INT,
-        region STRING,
-        filiere STRING,
-        valeur FLOAT,
-        unite STRING
-    );
-    """
-    cursor.execute(create_sql)
-    cursor.close()
-    conn.commit()
+    create_table_sql = f"""
+        CREATE OR REPLACE TABLE production_region (
+            annee INT,
+            nom_insee_region STRING,
+            code_insee_region STRING,
+            production_hydraulique_renouvelable FLOAT,
+            production_bioenergies_renouvelable FLOAT,
+            production_eolienne_renouvelable FLOAT,
+            production_solaire_renouvelable FLOAT,
+            production_electrique_renouvelable FLOAT,
+            production_gaz_renouvelable FLOAT,
+            production_totale_renouvelable FLOAT);"""
+    snowflake_hook.run(create_table_sql)
+    print("Table crée avec succès dans Snowflake.")
+    file_path = '/opt/airflow/data/prod_region_annuelle_enr.csv'
+    stage_name = 'RTE_STAGE'
+    put_command = f"PUT file://{file_path} @{stage_name}"
+    snowflake_hook.run(put_command)
+    copy_query = """ COPY INTO production_region FROM @RTE_STAGE/prod_region_annuelle_enr.csv
+    FILE_FORMAT = (TYPE = 'CSV' FIELD_OPTIONALLY_ENCLOSED_BY = '"', FIELD_DELIMITER = ';') ON_ERROR = 'CONTINUE'; """
+    snowflake_hook.run(copy_query)
+    print("Données insérées avec succès dans Snowflake.")
 
-def extract_api_data(**context):
-    response = requests.get(API_URL)
-    response.raise_for_status()
-    data = response.json()["results"]
-    context['ti'].xcom_push(key='enr_data', value=data)
+dag = DAG(dag_id="load_enr_csv_to_snowflake",
+    start_date=datetime(2014, 1, 1),
+    schedule_interval=None,
+    catchup=False,
+    tags=["production"],) 
 
-def load_to_snowflake(**context):
-    data = context['ti'].xcom_pull(key='enr_data')
-    if not data:
-        raise ValueError("No data to load")
+download_task = PythonOperator(task_id="download_csv", python_callable=download_csv_file)
 
-    hook = SnowflakeHook(snowflake_conn_id="snowflake_conn")
-    conn = hook.get_conn()
-    cursor = conn.cursor()
+load_task = PythonOperator(task_id="load_csv_to_snowflake", python_callable=load_csv_to_snowflake)
 
-    insert_query = """
-        INSERT INTO STAGING.PROD_REGION_ENR (annee, region, filiere, valeur, unite)
-        VALUES (%s, %s, %s, %s, %s)
-    """
-
-    for row in data:
-        cursor.execute(insert_query, (
-            row.get("annee"),
-            row.get("region"),
-            row.get("filiere"),
-            row.get("valeur"),
-            row.get("unite")
-        ))
-
-    cursor.close()
-    conn.commit()
-
-with DAG("api_to_snowflake_enr_full",
-         default_args=default_args,
-         schedule_interval="@daily",
-         catchup=False,
-         tags=["api", "snowflake"],
-         ) as dag:
-
-    create_table_task = PythonOperator(
-        task_id="create_table_if_not_exists",
-        python_callable=create_table,
-    )
-
-    extract_task = PythonOperator(
-        task_id="extract_from_api",
-        python_callable=extract_api_data,
-        provide_context=True,
-    )
-
-    load_task = PythonOperator(
-        task_id="load_to_snowflake",
-        python_callable=load_to_snowflake,
-        provide_context=True,
-    )
-
-    create_table_task >> extract_task >> load_task
+download_task >> load_task

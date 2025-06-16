@@ -18,6 +18,7 @@ CSV_DIR = os.path.join(DATA_DIR, "csv_files")  # Dossier pour les fichiers CSV
 def download_data():
     """Télécharge le fichier ZIP depuis RTE."""
     os.makedirs(DATA_DIR, exist_ok=True)
+ 
     url = "https://eco2mix.rte-france.com/download/eco2mix/eCO2mix_RTE_En-cours-TR.zip"
     command = ["curl", "-L", "-o", ZIP_FILE, url]
     result = subprocess.run(command, capture_output=True, text=True)
