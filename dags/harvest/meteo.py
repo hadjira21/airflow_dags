@@ -16,7 +16,7 @@ EXTRACTED_DIR = os.path.join(DATA_DIR, "extracted")
 CSV_FILE = os.path.join(DATA_DIR, "climat.csv")
 
 # URL de la ressource ZIP la plus récente
-RESOURCE_URL = "https://www.data.gouv.fr/fr/datasets/r/30d43a63-fb8e-4d58-a7cc-7e8751cf8a2e"  # à mettre à jour si besoin
+RESOURCE_URL = "https://www.data.gouv.fr/fr/datasets/r/eb4d0600-e90b-4517-a429-599ed13dbae0"  # à mettre à jour si besoin
 
 def download_zip():
     os.makedirs(DATA_DIR, exist_ok=True)
