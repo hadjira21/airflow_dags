@@ -25,7 +25,7 @@ def download_csv():
         raise Exception(f"Erreur de téléchargement : {response.status_code}")
 
 def transform_file():
-    df = pd.read_csv(CSV_FILE, delimiter=';', encoding='utf-8', low_memory=False)
+    df = pd.read_csv(CSV_FILE, delimiter=';', encoding='utf-8', compression='infer', low_memory=False)
 
     df.columns = [unidecode.unidecode(col.strip().replace(" ", "_")) for col in df.columns]
     df["AAAAMMJJ"] = pd.to_datetime(df["AAAAMMJJ"], format="%Y%m%d", errors="coerce")
@@ -36,6 +36,7 @@ def transform_file():
 
     df.to_csv(CSV_FILE, index=False, sep=';', encoding='utf-8')
     print("Transformation complète.")
+
 
 def load_to_snowflake():
     conn_params = {
