@@ -64,12 +64,12 @@ def load_csv_to_snowflake():
 
 dag = DAG(dag_id="load_enr_csv_to_snowflake",
     start_date=datetime(2014, 1, 1),
-    schedule_interval=None,
     catchup=False,
+    default_args=default_args, schedule_interval="@daily",
     tags=["production"],) 
 
-download_task = PythonOperator(task_id="download_csv", python_callable=download_csv_file)
+download_task = PythonOperator(task_id="download_csv", python_callable=download_csv_file, dag=dag,)
 
-load_task = PythonOperator(task_id="load_csv_to_snowflake", python_callable=load_csv_to_snowflake)
+load_task = PythonOperator(task_id="load_csv_to_snowflake", python_callable=load_csv_to_snowflake, dag=dag,)
 
 download_task >> load_task
