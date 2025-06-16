@@ -12,8 +12,7 @@ import unidecode
 DATA_DIR = "/opt/airflow/data/climat"
 CSV_FILE = os.path.join(DATA_DIR, "climat.csv")
 
-# URL directe vers le fichier CSV (à adapter si besoin)
-CSV_URL = "https://www.data.gouv.fr/fr/datasets/r/6c1f47ae-5dd0-4a0e-a76d-2dc0d585b56c"  # Exemple pour un CSV
+CSV_URL = "https://www.data.gouv.fr/fr/datasets/r/eb4d0600-e90b-4517-a429-599ed13dbae0"  # Exemple pour un CSV
 
 def download_csv():
     os.makedirs(DATA_DIR, exist_ok=True)
