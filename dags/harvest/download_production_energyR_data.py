@@ -58,23 +58,23 @@ def load_csv_to_snowflake():
     put_command = f"PUT file://{file_path} @{stage_name}"
     snowflake_hook.run(put_command)
     copy_query = """ COPY INTO production_region FROM @RTE_STAGE/prod_region_annuelle_enr.csv
-FILE_FORMAT = (
-    TYPE = 'CSV',
-    FIELD_DELIMITER = ';',
-    FIELD_OPTIONALLY_ENCLOSED_BY = '"',
-    SKIP_HEADER = 1,
-    TRIM_SPACE = TRUE,
-    ERROR_ON_COLUMN_COUNT_MISMATCH = FALSE
-)
-ON_ERROR = 'CONTINUE'
-PURGE = FALSE; """
+        FILE_FORMAT = (
+            TYPE = 'CSV',
+            FIELD_DELIMITER = ';',
+            FIELD_OPTIONALLY_ENCLOSED_BY = '"',
+            SKIP_HEADER = 1,
+            TRIM_SPACE = TRUE,
+            ERROR_ON_COLUMN_COUNT_MISMATCH = FALSE
+        )
+        ON_ERROR = 'CONTINUE'
+        PURGE = FALSE; """
 
 
 
     snowflake_hook.run(copy_query)
     print("Données insérées avec succès dans Snowflake.")
 
-dag = DAG(dag_id="load_enr_csv_to_snowflake",
+dag = DAG(dag_id="download_and_process_production_data",
     start_date=datetime(2014, 1, 1),
     catchup=False,
     default_args=default_args, schedule_interval="@daily",
