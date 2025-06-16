@@ -11,8 +11,8 @@ import unidecode
 
 # Définition du dossier de stockage
 DATA_DIR = "/opt/airflow/data"
-ZIP_FILE = os.path.join(DATA_DIR, "eCO2mix_RTE_En-cours-TR_v2.zip")
-EXTRACTED_DIR = os.path.join(DATA_DIR, "eCO2mix_RTE_En-cours-TR_v2")
+ZIP_FILE = os.path.join(DATA_DIR, "test.zip")
+EXTRACTED_DIR = os.path.join(DATA_DIR, "test")
 CSV_DIR = os.path.join(DATA_DIR, "csv_files")  # Dossier pour les fichiers CSV
 
 def download_data():
@@ -51,7 +51,7 @@ def rename_xls_to_csv(xls_path, csv_path):
 
 def read_data():
     """Lit et affiche un aperçu des données."""
-    csv_path = os.path.join(EXTRACTED_DIR, "eCO2mix_RTE_En-cours-TR_v2.csv")
+    csv_path = os.path.join(EXTRACTED_DIR, "test.csv")
     if not os.path.exists(csv_path):
         raise FileNotFoundError(f"Aucun fichier CSV trouvé : {csv_path}")
 
@@ -64,7 +64,7 @@ def read_data():
 
 def transform_data():
     """Supprime les accents des colonnes et des valeurs texte."""
-    csv_path = os.path.join(EXTRACTED_DIR, "eCO2mix_RTE_En-cours-TR_v2.csv")
+    csv_path = os.path.join(EXTRACTED_DIR, "test.csv")
     if not os.path.exists(csv_path):
         raise FileNotFoundError(f"Le fichier CSV est introuvable : {csv_path}")
 
@@ -92,7 +92,7 @@ def upload_to_snowflake():
     snowflake_hook.run(f"USE SCHEMA {conn_params['schema']}")
 
     create_table_sql = f"""
- CREATE OR REPLACE TABLE eco2_data_test (
+ CREATE OR REPLACE TABLE eco2_data (
     PERIMETRE VARCHAR,
     NATURE VARCHAR,
     DATE DATE,
@@ -139,15 +139,15 @@ def upload_to_snowflake():
     
     snowflake_hook.run(create_table_sql)
     print("Table crée avec succès dans Snowflake.")
-    file_path = '/opt/airflow/data/eCO2mix_RTE_En-cours-TR_v2/eCO2mix_RTE_En-cours-TR_v2.csv'
+    file_path = '/opt/airflow/data/test/test.csv'
     stage_name = 'RTE_STAGE'
     put_command = f"PUT file://{file_path} @{stage_name}"
     snowflake_hook.run(put_command)
     copy_query = f"""
-    COPY INTO eco2_data_test
+    COPY INTO eco2_data
     FROM (SELECT $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, 
     $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, $36, $37, $38, 
-    $39, $40, $41 FROM @RTE_STAGE/eCO2mix_RTE_En-cours-TR_v2.csv )
+    $39, $40, $41 FROM @RTE_STAGE/test.csv )
     FILE_FORMAT = (TYPE = 'CSV', SKIP_HEADER = 1, FIELD_DELIMITER = '\t', TRIM_SPACE = TRUE, FIELD_OPTIONALLY_ENCLOSED_BY = '"', REPLACE_INVALID_CHARACTERS = TRUE)
     FORCE = TRUE
     ON_ERROR = 'CONTINUE';"""
@@ -160,8 +160,8 @@ dag = DAG("download_data_eco2mix_test", default_args=default_args,
     start_date=datetime(2025, 6, 1),
     catchup=False,
 )
-xls_file_path = os.path.join(EXTRACTED_DIR, "eCO2mix_RTE_En-cours-TR_v2.xls")
-csv_file_path = os.path.join(EXTRACTED_DIR, "eCO2mix_RTE_En-cours-TR_v2.csv")
+xls_file_path = os.path.join(EXTRACTED_DIR, "test.xls")
+csv_file_path = os.path.join(EXTRACTED_DIR, "test.csv")
 
 download_task = PythonOperator(task_id="download_data_eco2", python_callable=download_data,  dag=dag,)
 
