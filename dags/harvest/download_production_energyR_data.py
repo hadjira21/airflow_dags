@@ -17,7 +17,7 @@ default_args = {
 
 
 def download_csv_file():
-    url = "https://data.ademe.fr/api/explore/v2.1/catalog/datasets/prod-region-annuelle-enr/exports/csv"
+    url = "https://odre.opendatasoft.com/api/explore/v2.1/catalog/datasets/prod-region-annuelle-enr/exports/csv?lang=fr&timezone=Europe%2FBerlin&use_labels=true&delimiter=%3B"
     local_path = "/opt/airflow/data/prod_region_annuelle_enr.csv"
 
     os.makedirs(os.path.dirname(local_path), exist_ok=True)
