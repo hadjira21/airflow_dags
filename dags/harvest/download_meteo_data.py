@@ -46,7 +46,7 @@ def read_data():
 
 def upload_to_snowflake():
     conn_params = {'user': 'HADJIRA25', 'password' : '42XCDpmzwMKxRww', 'account': 'TRMGRRV-JN45028',
-    'warehouse': 'COMPUTE_WH', 'database': 'BRONZE',  'schema': "METEO" }
+    'warehouse': 'INGESTION_WH', 'database': 'BRONZE',  'schema': "METEO" }
     df = pd.read_csv(CSV_FILE, encoding='ISO-8859-1', delimiter=';')
     hook = SnowflakeHook(snowflake_conn_id='snowflake_conn', **conn_params)
     

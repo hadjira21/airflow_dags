@@ -85,7 +85,7 @@ def transform_data():
 
 def upload_to_snowflake():
     conn_params = {'user': 'HADJIRA25', 'password' : '42XCDpmzwMKxRww', 'account': 'TRMGRRV-JN45028',
-    'warehouse': 'COMPUTE_WH', 'database': 'BRONZE',  'schema': "RTE" }
+    'warehouse': 'INGESTION_WH', 'database': 'BRONZE',  'schema': "RTE" }
     snowflake_hook = SnowflakeHook( snowflake_conn_id='snowflake_conn', **conn_params)
     snowflake_hook.run(f"USE DATABASE {conn_params['database']}")
     snowflake_hook.run(f"USE SCHEMA {conn_params['schema']}")
