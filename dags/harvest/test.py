@@ -71,13 +71,16 @@ def transform_data():
     try:
         df = pd.read_csv(csv_path, encoding='ISO-8859-1', delimiter=';')
 
+        
         # Nettoyage des colonnes
         df.columns = [unidecode.unidecode(col.strip()) for col in df.columns]
 
         # Nettoyage des champs texte
         for col in df.select_dtypes(include='object').columns:
             df[col] = df[col].apply(lambda x: unidecode.unidecode(str(x)) if pd.notnull(x) else x)
-
+        for col in df.columns:
+                if col not in ['PERIMETRE', 'NATURE', 'DATE', 'HEURES']:  # Colonnes non numériques
+                    df[col] = pd.to_numeric(df[col], errors='coerce')  # transforme '-' en NaN
         df.to_csv(csv_path, index=False, encoding='utf-8', sep=';')
         print("Fichier transformé avec accents supprimés.")
     except Exception as e:
