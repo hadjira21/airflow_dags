@@ -18,5 +18,5 @@ with DAG(
     test_query = SnowflakeOperator(
         task_id='test_snowflake',
         sql='SELECT current_version();',
-        snowflake_conn_id='snowflake_default',
+        snowflake_conn_id='snowflake_conn',
     )
