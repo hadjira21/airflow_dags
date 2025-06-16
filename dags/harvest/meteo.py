@@ -5,43 +5,28 @@ from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 from datetime import datetime
 import os
 import requests
-import zipfile
 import pandas as pd
 import unidecode
 
 # Dossiers
 DATA_DIR = "/opt/airflow/data/climat"
-ZIP_FILE = os.path.join(DATA_DIR, "climat.zip")
-EXTRACTED_DIR = os.path.join(DATA_DIR, "extracted")
 CSV_FILE = os.path.join(DATA_DIR, "climat.csv")
 
-# URL de la ressource ZIP la plus récente
-RESOURCE_URL = "https://www.data.gouv.fr/fr/datasets/r/eb4d0600-e90b-4517-a429-599ed13dbae0"  # à mettre à jour si besoin
+# URL directe vers le fichier CSV (à adapter si besoin)
+CSV_URL = "https://www.data.gouv.fr/fr/datasets/r/6c1f47ae-5dd0-4a0e-a76d-2dc0d585b56c"  # Exemple pour un CSV
 
-def download_zip():
+def download_csv():
     os.makedirs(DATA_DIR, exist_ok=True)
-    response = requests.get(RESOURCE_URL)
+    response = requests.get(CSV_URL)
     if response.status_code == 200:
-        with open(ZIP_FILE, "wb") as f:
+        with open(CSV_FILE, "wb") as f:
             f.write(response.content)
-        print("Téléchargement ZIP réussi.")
+        print("Téléchargement CSV réussi.")
     else:
         raise Exception(f"Erreur de téléchargement : {response.status_code}")
 
-def unzip_file():
-    if not os.path.exists(ZIP_FILE):
-        raise FileNotFoundError("Fichier ZIP non trouvé.")
-    os.makedirs(EXTRACTED_DIR, exist_ok=True)
-    with zipfile.ZipFile(ZIP_FILE, 'r') as zip_ref:
-        zip_ref.extractall(EXTRACTED_DIR)
-    print("Décompression réussie.")
-
 def transform_file():
-    file_list = [f for f in os.listdir(EXTRACTED_DIR) if f.endswith('.csv')]
-    if not file_list:
-        raise FileNotFoundError("Aucun fichier CSV trouvé.")
-    csv_path = os.path.join(EXTRACTED_DIR, file_list[0])
-    df = pd.read_csv(csv_path, delimiter=';', encoding='utf-8', low_memory=False)
+    df = pd.read_csv(CSV_FILE, delimiter=';', encoding='utf-8', low_memory=False)
 
     df.columns = [unidecode.unidecode(col.strip().replace(" ", "_")) for col in df.columns]
     df["AAAAMMJJ"] = pd.to_datetime(df["AAAAMMJJ"], format="%Y%m%d", errors="coerce")
@@ -101,15 +86,14 @@ default_args = {
 }
 
 dag = DAG(
-    "load_climat_data",
+    "load_climat_csv",
     default_args=default_args,
     schedule_interval="@daily",
     catchup=False
 )
 
-download = PythonOperator(task_id="download_zip", python_callable=download_zip, dag=dag)
-unzip = PythonOperator(task_id="unzip_file", python_callable=unzip_file, dag=dag)
+download = PythonOperator(task_id="download_csv", python_callable=download_csv, dag=dag)
 transform = PythonOperator(task_id="transform_file", python_callable=transform_file, dag=dag)
 load = PythonOperator(task_id="load_to_snowflake", python_callable=load_to_snowflake, dag=dag)
 
-download >> unzip >> transform >> load
+download >> transform >> load
