@@ -34,7 +34,7 @@ def download_csv_file():
 def load_csv_to_snowflake():
     file_path = "/opt/airflow/data/prod_region_annuelle_enr.csv"
     conn_params = {'user': 'HADJIRA25', 'password' : '42XCDpmzwMKxRww', 'account': 'TRMGRRV-JN45028',
-    'warehouse': 'INGESTION_WH', 'database': 'BRONZE',  'schema': "ENEDIS" }
+    'warehouse': 'INGESTION_WH', 'database': 'BRONZE',  'schema': "RTE" }
     snowflake_hook = SnowflakeHook( snowflake_conn_id='snowflake_conn', **conn_params)
     conn = snowflake_hook.get_conn()
     cursor = conn.cursor()
@@ -58,7 +58,18 @@ def load_csv_to_snowflake():
     put_command = f"PUT file://{file_path} @{stage_name}"
     snowflake_hook.run(put_command)
     copy_query = """ COPY INTO production_region FROM @RTE_STAGE/prod_region_annuelle_enr.csv
-    FILE_FORMAT = (TYPE = 'CSV' FIELD_OPTIONALLY_ENCLOSED_BY = '"', FIELD_DELIMITER = ';') ON_ERROR = 'CONTINUE'; """
+                FILE_FORMAT = (
+            TYPE = 'CSV',
+            FIELD_DELIMITER = ';',
+            FIELD_OPTIONALLY_ENCLOSED_BY = '"',
+            SKIP_HEADER = 1,
+            TRIM_SPACE = TRUE
+            )
+            ON_ERROR = 'CONTINUE'
+            PURGE = FALSE; """
+
+
+
     snowflake_hook.run(copy_query)
     print("Données insérées avec succès dans Snowflake.")
 
