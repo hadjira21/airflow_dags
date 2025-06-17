@@ -63,23 +63,21 @@ def unzip_data(region, **kwargs):
     with zipfile.ZipFile(file_paths['zip_file'], 'r') as zip_ref:
         zip_ref.extractall(file_paths['extracted_dir'])
     print(f"Fichiers extraits pour {region} dans : {file_paths['extracted_dir']}")
+def rename_xls_to_csv(region, **kwargs):
+    """Lit le fichier .xls, sélectionne les colonnes souhaitées, sauvegarde en CSV.
+    Pour une région spécifique."""
 
-def convert_xls_to_clean_csv(region, **kwargs):
     file_paths = get_region_file_paths(region)
-
-    if not os.path.exists(file_paths['xls_file']):
-        raise FileNotFoundError(f"Le fichier XLS n'existe pas : {file_paths['xls_file']}")
-
     try:
-        # Essayer d'abord lire en CSV (car fichier souvent texte mal nommé)
-        df = pd.read_csv(file_paths['xls_file'], sep=';', encoding='utf-8')
-                
-        df_clean = df[['Périmètre', 'Nature', 'Date', 'Heures', 'Consommation', 'Thermique', 'Eolien', 'Solaire','Hydraulique', 'Pompage']]
-        df_clean.to_csv(file_paths['csv_file'], sep=';', index=False, encoding='utf-8')
-        print(f"Fichier nettoyé sauvegardé en CSV : {file_paths['csv_file']}")
-
+        if not os.path.exists(file_paths['xls_file']):
+            raise FileNotFoundError(f"Le fichier {file_paths['xls_file']} n'a pas été trouvé.")
+        df = pd.read_excel(file_paths['xls_file'], engine='openpyxl') 
+        df = df[['Perimetre', 'Nature', 'Date', 'Heures', 'Consommation','Thermique', 'Eolien', 'Solaire', 'Hydraulique', 'Pompage']]
+        print(df.head)
+        df.to_csv(file_paths['csv_file'], sep='\t', index=False, encoding='ISO-8859-1')
+        print(f"Fichier converti et sauvegardé en CSV : {file_paths['csv_file']}")
     except Exception as e:
-        print(f"Erreur lors de la conversion de {file_paths['xls_file']} : {e}")
+        print(f"Une erreur est survenue : {e}")
 
 
 
