@@ -213,12 +213,12 @@ for region in REGIONS:
         dag=dag,
     )
 
-    read_task = PythonOperator(
-        task_id=f"read_{region_task_id}",
-        python_callable=read_data,
-        op_kwargs={'region': region},
-        dag=dag,
-    )
+    # read_task = PythonOperator(
+    #     task_id=f"read_{region_task_id}",
+    #     python_callable=read_data,
+    #     op_kwargs={'region': region},
+    #     dag=dag,
+    # )
 
     
     load_task = PythonOperator(
@@ -228,4 +228,4 @@ for region in REGIONS:
         dag=dag  
     )
 
-    download_task >> unzip_task >> rename_task >> read_task  >> load_task
+    download_task >> unzip_task >> rename_task   >> load_task
