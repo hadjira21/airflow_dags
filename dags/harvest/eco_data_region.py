@@ -88,7 +88,7 @@ def read_data(region, **kwargs):
 
     try:
         df = pd.read_csv(file_paths['csv_file'], encoding='ISO-8859-1', delimiter='\t')
-        df = df[[ "PERIMETRE", "NATURE", "DATE", "HEURES", "CONSOMMATION", "THERMIQUE", "EOLIEN", "SOLAIRE", "HYDRAULIQUE", "POMPAGE"]]
+        df = df[[ "Périmètre", "Nature"]]
         df.to_csv(file_paths['csv_file'], encoding='ISO-8859-1', delimiter='\t')
         df = pd.read_csv(file_paths['csv_file'], encoding='ISO-8859-1', delimiter='\t')
 
