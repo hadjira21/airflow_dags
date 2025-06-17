@@ -130,10 +130,12 @@ def upload_to_snowflake(region, **kwargs):
 
     # 1. Lecture du CSV pour inférer le schéma
     df = pd.read_csv(file_paths['csv_file'], sep=';', nrows=100)
-    df = df[['Périmètre', 'Nature', 'Date', 'Heures', 'Consommation',
-        'Thermique', 'Nucléaire', 'Eolien', 'Solaire', 'Hydraulique', 'Pompage'
+    print(df.columns)
+    df = df[['Perimetre', 'Nature', 'Date', 'Heures', 'Consommation',
+        'Thermique',  'Eolien', 'Solaire', 'Hydraulique', 'Pompage'
     ]
     ]
+
     def map_dtype(dtype):
         if pd.api.types.is_integer_dtype(dtype):
             return "NUMBER"
