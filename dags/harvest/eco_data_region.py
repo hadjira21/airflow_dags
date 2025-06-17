@@ -194,7 +194,7 @@ for region in REGIONS:
     )
     convert_to_csv = PythonOperator(
         task_id=f'convert_xls_to_clean_csv_{region_task_id}',
-        python_callable=convert_xls_to_clean_csv,
+        python_callable=rename_xls_to_csv,
         op_kwargs={'region': region},
         dag=dag,
     )
