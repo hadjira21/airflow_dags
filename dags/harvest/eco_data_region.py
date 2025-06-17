@@ -64,7 +64,7 @@ def unzip_data(region, **kwargs):
         zip_ref.extractall(file_paths['extracted_dir'])
     print(f"Fichiers extraits pour {region} dans : {file_paths['extracted_dir']}")
 
-def convert_to_clean_csv(region, **kwargs):
+def convert_xls_to_clean_csv(region, **kwargs):
     file_paths = get_region_file_paths(region)
 
     # On liste les fichiers extraits
