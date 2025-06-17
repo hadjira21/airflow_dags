@@ -159,8 +159,19 @@ def upload_to_snowflake(region, **kwargs):
 
     # Construire la requête COPY INTO avec ces colonnes
     copy_query = f"""
-    COPY INTO eco2_data_regional ({', '.join(columns)})
-    FROM @{stage_name}/{csv_filename}
+    COPY INTO eco2_data_regional (
+        "PERIMÈTRE",
+        "NATURE",
+        "DATE",
+        "HEURES",
+        "CONSOMMATION",
+        "THERMIQUE",
+        "EOLIEN",
+        "SOLAIRE",
+        "HYDRAULIQUE",
+        "POMPAGE"
+    )
+    FROM @RTE_STAGE/eCO2mix_RTE_Auvergne-Rhone-Alpes_En-cours-TR.csv
     FILE_FORMAT = (
         TYPE = 'CSV',
         SKIP_HEADER = 1,
@@ -171,6 +182,7 @@ def upload_to_snowflake(region, **kwargs):
     )
     FORCE = TRUE
     ON_ERROR = 'CONTINUE';
+
     """
     snowflake_hook.run(copy_query)
 
