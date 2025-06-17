@@ -116,10 +116,10 @@ def upload_to_snowflake(region, **kwargs):
         raise FileNotFoundError(f"Fichier CSV introuvable : {file_paths['csv_file']}")
 
     # Lecture CSV avec encodage latin1 et séparateur ';'
-    df = pd.read_csv(file_paths['csv_file'], sep=';', encoding='ISO-8859-1')
-    print(df.columns)
-    # df = df[['Périmètre', 'Nature', 'Date', 'Heures', 'Consommation', 'Thermique', 'Eolien', 'Solaire', 'Hydraulique', 'Pompage']]
-    # print(df.head())
+    df = pd.read_csv(file_paths['csv_file'], sep='\t', encoding='ISO-8859-1')
+    print(df.head())
+    df = df[['Périmètre', 'Nature', 'Date', 'Heures', 'Consommation', 'Thermique', 'Eolien', 'Solaire', 'Hydraulique', 'Pompage']]
+    print(df.head())
     # dtype_mapping = {
     #     'object': 'VARCHAR',
     #     'float64': 'FLOAT',
