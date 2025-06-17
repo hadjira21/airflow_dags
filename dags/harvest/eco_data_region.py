@@ -58,24 +58,27 @@ def read_data():
     print("Aperçu des données :")
     print(df.head())
 def transform_data():
-    """Supprime les accents et remplace les '-' par NaN dans les colonnes numériques."""
+    """Nettoie les données : supprime les accents, remplace '-' et 'ND' par NaN, et exporte."""
     if not os.path.exists(CSV_FILE):
         raise FileNotFoundError(f"Le fichier CSV est introuvable : {CSV_FILE}")
 
+    # Chargement
     df = pd.read_csv(CSV_FILE, encoding='ISO-8859-1', delimiter=';')
 
     # Nettoyage des noms de colonnes
     df.columns = [unidecode.unidecode(col.strip()) for col in df.columns]
 
-    # Nettoyage des valeurs texte
+    # Remplacer '-' et 'ND' par NaN dans tout le DataFrame
+    df.replace(["-", "ND", "--", ""], pd.NA, inplace=True)
+
+    # Nettoyage des valeurs texte (accents)
     for col in df.select_dtypes(include='object').columns:
         df[col] = df[col].apply(lambda x: unidecode.unidecode(str(x)) if pd.notnull(x) else x)
 
-    # Remplacer '-' par NaN dans les colonnes numériques potentielles
-    df.replace("-", pd.NA, inplace=True)
-
+    # Réécriture du CSV nettoyé
     df.to_csv(CSV_FILE, index=False, encoding='utf-8', sep=';')
-    print("Fichier transformé avec accents supprimés et '-' remplacés.")
+    print(" Données transformées : accents supprimés, '-' et 'ND' remplacés.")
+
 
 def upload_to_snowflake():
     conn_params = {
