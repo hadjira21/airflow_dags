@@ -15,7 +15,7 @@ REGION = "final"
 REGION_DIR = os.path.join(BASE_DIR, REGION)
 ZIP_FILE = os.path.join(REGION_DIR, f"{REGION}.zip")
 EXTRACTED_DIR = REGION_DIR
-XLS_FILE = os.path.join(EXTRACTED_DIR, "eCO2mix_RTE_Bourgogne-Franche-Comte_En-cours-TR.xls")
+XLS_FILE = os.path.join(EXTRACTED_DIR, "eCO2mix_RTE_Auvergne-Rhone-Alpes_En-cours-TR.xls")
 CSV_FILE = os.path.join(EXTRACTED_DIR, f"{REGION}.csv")
 
 
