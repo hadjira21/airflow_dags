@@ -132,7 +132,7 @@ def upload_to_snowflake(region, **kwargs):
     # 1. Lecture du CSV pour inférer le schéma
     df = pd.read_csv(file_paths['csv_file'], sep='\t', encoding='ISO-8859-1')
     print(df.columns)
-    # df = df[['Perimetre', 'Nature', 'Date', 'Heures', 'Consommation', 'Thermique',  'Eolien', 'Solaire', 'Hydraulique', 'Pompage']]
+    df = df[['Périmètre', 'Nature', 'Date', 'Heures', 'Consommation', 'Thermique',  'Eolien', 'Solaire', 'Hydraulique', 'Pompage']]
 
     print(df.head())
 
