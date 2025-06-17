@@ -9,96 +9,66 @@ import zipfile
 import pandas as pd
 import unidecode
 
-# --- Constantes de chemin ---
+# --- Configuration multi-régions ---
 BASE_DIR = "/opt/airflow/data"
-REGION = "final_test"
-REGION_DIR = os.path.join(BASE_DIR, REGION)
-ZIP_FILE = os.path.join(REGION_DIR, f"{REGION}.zip")
-EXTRACTED_DIR = REGION_DIR
-XLS_FILE = os.path.join(EXTRACTED_DIR, "eCO2mix_RTE_Auvergne-Rhone-Alpes_En-cours-TR.xls")
-CSV_FILE = os.path.join(EXTRACTED_DIR, f"{REGION}.csv")
+REGIONS = {
+    "auvergne_rhone_alpes": "https://eco2mix.rte-france.com/download/eco2mix/eCO2mix_RTE_Auvergne-Rhone-Alpes_En-cours-TR.zip",
+    "ile-de-france": "https://eco2mix.rte-france.com/download/eco2mix/eCO2mix_RTE_Ile-de-France_En-cours-TR.zip"
+    # Ajoute d'autres régions ici si nécessaire
+}
 
+SELECTED_COLUMNS = ["Perimetre", "Nature", "Date", "Heures", "Consommation", "Thermique", "Nucleaire", 'Solaire', 'Hydraulique']
 
-def download_data():
-    """Télécharge le fichier ZIP depuis RTE."""
-    os.makedirs(REGION_DIR, exist_ok=True)
-    url = "https://eco2mix.rte-france.com/download/eco2mix/eCO2mix_RTE_Auvergne-Rhone-Alpes_En-cours-TR.zip"
-    command = ["curl", "-L", "-o", ZIP_FILE, url]
-    result = subprocess.run(command, capture_output=True, text=True)
+def download_and_extract_all():
+    for region, url in REGIONS.items():
+        region_dir = os.path.join(BASE_DIR, region)
+        zip_path = os.path.join(region_dir, f"{region}.zip")
 
-    if result.returncode == 0:
-        print(f"Fichier téléchargé avec succès : {ZIP_FILE}")
-    else:
-        raise Exception(f"Erreur lors du téléchargement : {result.stderr}")
+        os.makedirs(region_dir, exist_ok=True)
 
-def unzip_data():
-    """Décompresse le fichier ZIP."""
-    if not os.path.exists(ZIP_FILE):
-        raise FileNotFoundError(f"Le fichier ZIP n'existe pas : {ZIP_FILE}")
+        # Télécharger le ZIP
+        command = ["curl", "-L", "-o", zip_path, url]
+        result = subprocess.run(command, capture_output=True, text=True)
+        if result.returncode != 0:
+            raise Exception(f"Erreur de téléchargement pour {region}: {result.stderr}")
 
-    os.makedirs(EXTRACTED_DIR, exist_ok=True)
-    with zipfile.ZipFile(ZIP_FILE, 'r') as zip_ref:
-        zip_ref.extractall(EXTRACTED_DIR)
-    print(f"Fichiers extraits dans : {EXTRACTED_DIR}")
+        # Dézipper
+        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+            zip_ref.extractall(region_dir)
+        print(f"{region} téléchargé et extrait.")
 
-def rename_xls_to_csv():
-    """Renomme le fichier .xls en .csv."""
-    if os.path.exists(XLS_FILE):
-        os.rename(XLS_FILE, CSV_FILE)
-        print(f"Fichier renommé de {XLS_FILE} à {CSV_FILE}")
-    else:
-        raise FileNotFoundError(f"Le fichier {XLS_FILE} n'a pas été trouvé.")
+def transform_and_combine_all():
+    dfs = []
+    for region in REGIONS.keys():
+        region_dir = os.path.join(BASE_DIR, region)
+        xls_file = [f for f in os.listdir(region_dir) if f.endswith(".xls")][0]
+        xls_path = os.path.join(region_dir, xls_file)
 
-def read_data():
-    """Lit et affiche un aperçu des données."""
-    if not os.path.exists(CSV_FILE):
-        raise FileNotFoundError(f"Aucun fichier CSV trouvé : {CSV_FILE}")
+        # Lire le fichier
+        df = pd.read_csv(xls_path, encoding='ISO-8859-1', delimiter='\t')
 
-    df = pd.read_csv(CSV_FILE, encoding='ISO-8859-1', delimiter='\t')
-    print("Aperçu des données :")
-    print(df.head())
-def transform_data():
-    """Nettoie les données, sélectionne les colonnes, remplace les valeurs manquantes et exporte."""
-    if not os.path.exists(CSV_FILE):
-        raise FileNotFoundError(f"Le fichier CSV est introuvable : {CSV_FILE}")
+        # Nettoyer les colonnes
+        df.columns = [unidecode.unidecode(col.strip()) for col in df.columns]
+        selected_cols_clean = [unidecode.unidecode(col) for col in SELECTED_COLUMNS]
+        df = df[[col for col in selected_cols_clean if col in df.columns]]
+        df = df[~df.isin(["-", "ND", "--", ""]).any(axis=1)]
 
-    df = pd.read_csv(CSV_FILE, encoding='ISO-8859-1', delimiter='\t')
+        for col in df.select_dtypes(include='object').columns:
+            df[col] = df[col].apply(lambda x: unidecode.unidecode(str(x)) if pd.notnull(x) else x)
 
-    # Nettoyage des noms de colonnes
-    df.columns = [unidecode.unidecode(col.strip()) for col in df.columns]
-    
-    SELECTED_COLUMNS = ["Perimetre", "Nature", "Date", "Heures", "Consommation", "Thermique", "Nucleaire", 'Solaire', 'Hydraulique']
-    
-    selected_cols_clean = [unidecode.unidecode(col) for col in SELECTED_COLUMNS]
-    df = df[[col for col in selected_cols_clean if col in df.columns]]
+        df["region"] = region  # Ajouter une colonne pour la région
+        dfs.append(df)
 
-    # Supprimer les lignes contenant '-', 'ND', '--', ou '' dans n'importe quelle colonne
-    df = df[~df.isin(["-", "ND", "--", ""]).any(axis=1)]
+    # Concaténer toutes les régions
+    combined_df = pd.concat(dfs, ignore_index=True)
 
-    # Nettoyer les accents dans les colonnes texte
-    for col in df.select_dtypes(include='object').columns:
-        df[col] = df[col].apply(lambda x: unidecode.unidecode(str(x)) if pd.notnull(x) else x)
+    # Export en CSV global
+    output_path = os.path.join(BASE_DIR, "eco2mix_combined.csv")
+    combined_df.to_csv(output_path, index=False, encoding='utf-8', sep='\t')
+    print("Données combinées exportées à :", output_path)
 
-    print("Colonnes et types estimés :")
-    for col in df.columns:
-        dtype = df[col].dtype
-        if pd.api.types.is_integer_dtype(dtype) or pd.api.types.is_float_dtype(dtype):
-            sql_type = "NUMBER"
-        elif pd.api.types.is_datetime64_any_dtype(dtype):
-            if 'date' in col.lower():
-                sql_type = "DATE"
-            else:
-                sql_type = "TIMESTAMP"
-        else:
-            sql_type = "VARCHAR"
-        print(f"{col} {sql_type},")
-
-    df.to_csv(CSV_FILE, index=False, encoding='utf-8', sep='\t')
-    print("Données nettoyées, colonnes sélectionnées et exportées.")
-
-
-
-def upload_to_snowflake():
+def upload_to_snowflake_combined():
+    CSV_FILE = os.path.join(BASE_DIR, "eco2mix_combined.csv")
     conn_params = {
         'user': 'HADJIRA25',
         'password': '42XCDpmzwMKxRww',
@@ -108,10 +78,12 @@ def upload_to_snowflake():
         'schema': "METEO"
     }
     snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_conn', **conn_params)
+
     snowflake_hook.run(f"USE DATABASE {conn_params['database']}")
     snowflake_hook.run(f"USE SCHEMA {conn_params['schema']}")
 
-    snowflake_hook.run("""CREATE OR REPLACE TABLE eco2_data_test (
+    snowflake_hook.run("""
+    CREATE OR REPLACE TABLE eco2_data_all (
         PERIMETRE VARCHAR,
         NATURE VARCHAR,
         DATE DATE,
@@ -119,28 +91,26 @@ def upload_to_snowflake():
         CONSOMMATION NUMBER,
         THERMIQUE NUMBER,
         NUCLEAIRE NUMBER,
-        EOLIEN NUMBER,
         SOLAIRE NUMBER,
-        HYDRAULIQUE NUMBER
-     
-    );""")
+        HYDRAULIQUE NUMBER,
+        REGION VARCHAR
+    );
+    """)
 
     stage_name = 'METEO_STAGE'
-    put_command = f"PUT file://{CSV_FILE} @{stage_name}"
-    snowflake_hook.run(put_command)
+    snowflake_hook.run(f"PUT file://{CSV_FILE} @{stage_name}")
 
-    copy_query = f"""
-    COPY INTO eco2_data_test
-    FROM @{stage_name}/final_test.csv
-    FILE_FORMAT = (TYPE = 'CSV', SKIP_HEADER = 1, FIELD_DELIMITER = '\t', TRIM_SPACE = TRUE, 
+    snowflake_hook.run(f"""
+    COPY INTO eco2_data_all
+    FROM @{stage_name}/eco2mix_combined.csv
+    FILE_FORMAT = (TYPE = 'CSV', SKIP_HEADER = 1, FIELD_DELIMITER = '\t', TRIM_SPACE = TRUE,
     FIELD_OPTIONALLY_ENCLOSED_BY = '"', REPLACE_INVALID_CHARACTERS = TRUE, error_on_column_count_mismatch=false)
     FORCE = TRUE
     ON_ERROR = 'CONTINUE';
-    """
-    snowflake_hook.run(copy_query)
-    print("Données insérées avec succès dans Snowflake.")
+    """)
+    print("Données combinées insérées dans Snowflake.")
 
-# --- Définition du DAG ---
+# --- DAG Airflow ---
 default_args = {
     "owner": "airflow",
     "start_date": datetime(2025, 3, 20),
@@ -148,19 +118,14 @@ default_args = {
 }
 
 dag = DAG(
-    "download_data_eco2mix_test",
+    "eco2mix_multi_region_ingestion",
     default_args=default_args,
     schedule_interval="@daily",
     catchup=False,
 )
 
-# --- Définition des tâches ---
-download_task = PythonOperator(task_id="download_data", python_callable=download_data, dag=dag)
-unzip_task = PythonOperator(task_id="unzip_data", python_callable=unzip_data, dag=dag)
-rename_task = PythonOperator(task_id='rename_xls_to_csv', python_callable=rename_xls_to_csv, dag=dag)
-read_task = PythonOperator(task_id="read_data", python_callable=read_data, dag=dag)
-transform_task = PythonOperator(task_id="transform_data", python_callable=transform_data, dag=dag)
-upload_task = PythonOperator(task_id="upload_to_snowflake", python_callable=upload_to_snowflake, dag=dag)
+download_and_extract = PythonOperator(task_id="download_and_extract", python_callable=download_and_extract_all, dag=dag)
+transform_and_combine = PythonOperator(task_id="transform_and_combine", python_callable=transform_and_combine_all, dag=dag)
+upload_snowflake = PythonOperator(task_id="upload_to_snowflake", python_callable=upload_to_snowflake_combined, dag=dag)
 
-# --- Orchestration ---
-download_task >> unzip_task >> rename_task >> read_task >> transform_task >> upload_task
+download_and_extract >> transform_and_combine >> upload_snowflake
