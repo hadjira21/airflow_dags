@@ -66,17 +66,20 @@ def transform_data():
 
     # Nettoyage des noms de colonnes
     df.columns = [unidecode.unidecode(col.strip()) for col in df.columns]
-    SELECTED_COLUMNS = [ "Perimetre", "Nature", "Date", "Heures", "Consommation", "Thermique", "Nucleaire",'Solaire', 'Hydraulique']
-    # Sélectionner uniquement les colonnes désirées
-    df = df[[unidecode.unidecode(col) for col in SELECTED_COLUMNS if unidecode.unidecode(col) in df.columns]]
+    
+    SELECTED_COLUMNS = ["Perimetre", "Nature", "Date", "Heures", "Consommation", "Thermique", "Nucleaire", 'Solaire', 'Hydraulique']
+    
+    selected_cols_clean = [unidecode.unidecode(col) for col in SELECTED_COLUMNS]
+    df = df[[col for col in selected_cols_clean if col in df.columns]]
 
-    # Remplacer valeurs manquantes
+    # Supprimer les lignes contenant '-', 'ND', '--', ou '' dans n'importe quelle colonne
     df = df[~df.isin(["-", "ND", "--", ""]).any(axis=1)]
 
-    # Nettoyage accents dans les colonnes texte
+    # Nettoyer les accents dans les colonnes texte
     for col in df.select_dtypes(include='object').columns:
         df[col] = df[col].apply(lambda x: unidecode.unidecode(str(x)) if pd.notnull(x) else x)
-        print("Colonnes et types estimés :")
+
+    print("Colonnes et types estimés :")
     for col in df.columns:
         dtype = df[col].dtype
         if pd.api.types.is_integer_dtype(dtype) or pd.api.types.is_float_dtype(dtype):
@@ -89,8 +92,9 @@ def transform_data():
         else:
             sql_type = "VARCHAR"
         print(f"{col} {sql_type},")
+
     df.to_csv(CSV_FILE, index=False, encoding='utf-8', sep='\t')
-    print("✅ Données nettoyées, colonnes sélectionnées et exportées.")
+    print("Données nettoyées, colonnes sélectionnées et exportées.")
 
 
 
