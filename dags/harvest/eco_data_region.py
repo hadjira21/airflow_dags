@@ -65,15 +65,14 @@ def unzip_data(region, **kwargs):
     print(f"Fichiers extraits pour {region} dans : {file_paths['extracted_dir']}")
 
 def convert_xls_to_clean_csv(region, **kwargs):
-    
     file_paths = get_region_file_paths(region)
 
     if not os.path.exists(file_paths['xls_file']):
         raise FileNotFoundError(f"Le fichier XLS n'existe pas : {file_paths['xls_file']}")
 
     try:
-        # Lecture du fichier .xls
-        df = pd.read_excel(file_paths['xls_file'],  engine='openpyxl')
+        # Essayer d'abord lire en CSV (car fichier souvent texte mal nommé)
+        df = pd.read_csv(file_paths['xls_file'], sep=';', encoding='utf-8')
                 
         df_clean = df[['Périmètre', 'Nature', 'Date', 'Heures', 'Consommation', 'Thermique', 'Eolien', 'Solaire','Hydraulique', 'Pompage']]
         df_clean.to_csv(file_paths['csv_file'], sep=';', index=False, encoding='utf-8')
@@ -81,6 +80,7 @@ def convert_xls_to_clean_csv(region, **kwargs):
 
     except Exception as e:
         print(f"Erreur lors de la conversion de {file_paths['xls_file']} : {e}")
+
 
 
 
