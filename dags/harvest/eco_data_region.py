@@ -118,7 +118,7 @@ def upload_to_snowflake(region, **kwargs):
     snowflake_hook.run(put_command)
     print(f"Fichier chargé dans stage RTE_STAGE")
     copy_query = f"""
-    COPY INTO eco2_data
+    COPY INTO ECO2_DATA_REGIONAL
     FROM (SELECT $1, $2, $3, $4, $5, $6, $7, $8, $9, $10 FROM @RTE_STAGE/{os.path.basename(file_paths['csv_file'])}
     FILE_FORMAT = (TYPE = 'CSV', SKIP_HEADER = 1, FIELD_DELIMITER = '\t', TRIM_SPACE = TRUE, FIELD_OPTIONALLY_ENCLOSED_BY = '"', REPLACE_INVALID_CHARACTERS = TRUE)
     FORCE = TRUE
