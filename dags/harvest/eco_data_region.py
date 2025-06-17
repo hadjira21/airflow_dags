@@ -13,7 +13,7 @@ import unidecode
 DATA_DIR = "/opt/airflow/data/test_region"
 ZIP_FILE = os.path.join(DATA_DIR, "eCO2mix_RTE_En-cours-TR.zip")
 EXTRACTED_DIR = os.path.join(DATA_DIR, "eCO2mix_RTE_En-cours-TR")
-CSV_PATH = os.path.join(EXTRACTED_DIR, "eCO2mix_RTE_En-cours-TR.csv")
+CSV_PATH = "/opt/airflow/data/test_region/eCO2mix_RTE_En-cours-TR/eCO2mix_RTE_En-cours-TR.csv"
 
 def download_data():
     os.makedirs(DATA_DIR, exist_ok=True)
