@@ -14,7 +14,7 @@ DATA_DIR = "/opt/airflow/data/test_region"
 ZIP_FILE = os.path.join(DATA_DIR, "eCO2mix_RTE_En-cours-TR.zip")
 EXTRACTED_DIR = os.path.join(DATA_DIR, "eCO2mix_RTE_En-cours-TR")
 CSV_PATH = "/opt/airflow/data/test_region/eCO2mix_RTE_En-cours-TR/eCO2mix_RTE_En-cours.csv"
-
+EXCEL_PATH = "/opt/airflow/data/test_region/eCO2mix_RTE_En-cours-TR/eCO2mix_RTE_En-cours.xls"
 def download_data():
     os.makedirs(DATA_DIR, exist_ok=True)
     url = "https://eco2mix.rte-france.com/download/eco2mix/eCO2mix_RTE_Auvergne-Rhone-Alpes_En-cours-TR.zip"
@@ -32,61 +32,41 @@ def unzip_data():
         zip_ref.extractall(EXTRACTED_DIR)
     print(f"Fichiers extraits dans : {EXTRACTED_DIR}")
 
-def rename_xls_to_csv():
+def rename_xls_to_csv(xls_path, csv_path):
+    """Renomme le fichier .xls en .csv."""
     try:
-        for f in os.listdir(EXTRACTED_DIR):
-            if f.endswith(".xls"):
-                xls_path = os.path.join(EXTRACTED_DIR, f)
-                os.rename(xls_path, CSV_PATH)
-                print(f"Fichier renommé : {xls_path} -> {CSV_PATH}")
-                return
-        raise FileNotFoundError("Aucun fichier .xls trouvé pour le renommage.")
+        if os.path.exists(xls_path):
+            os.rename(xls_path, csv_path)
+            print(f"Fichier renommé de {xls_path} à {csv_path}")
+        else:
+            raise FileNotFoundError(f"Le fichier {xls_path} n'a pas été trouvé.")
     except Exception as e:
-        print(f"Erreur renommage : {e}")
+        print(f"Une erreur est survenue : {e}")
 
-def read_data():
-    if not os.path.exists(CSV_PATH):
-        raise FileNotFoundError(f"Aucun fichier CSV trouvé : {CSV_PATH}")
-    try:
-        df = pd.read_csv(CSV_PATH, encoding='ISO-8859-1', delimiter=';')
-        print("Aperçu des données :")
-        print(df.head())
-    except Exception as e:
-        print(f"Erreur lecture CSV : {e}")
-
-# def transform_data():
-#     if not os.path.exists(CSV_PATH):
-#         raise FileNotFoundError(f"Fichier CSV introuvable : {CSV_PATH}")
-#     try:
-#         df = pd.read_csv(CSV_PATH, encoding='ISO-8859-1', delimiter=';')
-#         df.columns = [unidecode.unidecode(col.strip()).upper().replace(" ", "_").replace("-", "_") for col in df.columns]
-#         df.to_csv(CSV_PATH, index=False, encoding='utf-8', sep=';')  
-#         print("Colonnes nettoyées et fichier transformé.")
-#     except Exception as e:
-#         print(f"Erreur transformation : {e}")
-#         raise
-
-def transform_data():
-    """Supprime les accents des colonnes et des valeurs texte."""
-    csv_path = os.path.exists(CSV_PATH)
+def read_data(csv_path):
+    """Lit et affiche un aperçu des données."""
     if not os.path.exists(csv_path):
-        raise FileNotFoundError(f"Le fichier CSV est introuvable : {csv_path}")
+        raise FileNotFoundError(f"Aucun fichier CSV trouvé : {csv_path}")
 
     try:
         df = pd.read_csv(csv_path, encoding='ISO-8859-1', delimiter=';')
-
-        # Nettoyage des colonnes
-        df.columns = [unidecode.unidecode(col.strip()) for col in df.columns]
-
-        # Nettoyage des champs texte
-        for col in df.select_dtypes(include='object').columns:
-            df[col] = df[col].apply(lambda x: unidecode.unidecode(str(x)) if pd.notnull(x) else x)
-
-        df.to_csv(csv_path, index=False, encoding='utf-8', sep=';')
-        print("Fichier transformé avec accents supprimés.")
+        print("Aperçu des données :")
+        print(df.head())
     except Exception as e:
-        print(f"Erreur pendant la transformation : {e}")
+        print(f"Erreur lors de la lecture du fichier CSV : {e}")
+
+def transform_data(CSV_PATH):
+    if not os.path.exists(CSV_PATH):
+        raise FileNotFoundError(f"Fichier CSV introuvable : {CSV_PATH}")
+    try:
+        df = pd.read_csv(CSV_PATH, encoding='ISO-8859-1', delimiter=';')
+        df.columns = [unidecode.unidecode(col.strip()).upper().replace(" ", "_").replace("-", "_") for col in df.columns]
+        df.to_csv(CSV_PATH, index=False, encoding='utf-8', sep=';')  
+        print("Colonnes nettoyées et fichier transformé.")
+    except Exception as e:
+        print(f"Erreur transformation : {e}")
         raise
+
 
 
 def upload_to_snowflake():
@@ -225,9 +205,9 @@ dag = DAG(
 # Tasks
 download_task = PythonOperator(task_id="download_data", python_callable=download_data, dag=dag)
 unzip_task = PythonOperator(task_id="unzip_data", python_callable=unzip_data, dag=dag)
-rename_task = PythonOperator(task_id="rename_xls_to_csv", python_callable=rename_xls_to_csv, dag=dag)
-read_task = PythonOperator(task_id="read_data", python_callable=read_data, dag=dag)
-transform_task = PythonOperator(task_id="transform_data", python_callable=transform_data, dag=dag)
+rename_task = PythonOperator(task_id="rename_xls_to_csv", python_callable=rename_xls_to_csv,op_args=[EXCEL_PATH, CSV_PATH],dag=dag,)
+read_task = PythonOperator(task_id="read_data", python_callable=read_data,op_args=[CSV_PATH],dag=dag,)
+transform_task = PythonOperator(task_id="transform_data", python_callable=transform_data,op_args=[CSV_PATH],dag=dag,)
 load_task = PythonOperator(task_id="upload_to_snowflake", python_callable=upload_to_snowflake, dag=dag)
 
 # Orchestration
