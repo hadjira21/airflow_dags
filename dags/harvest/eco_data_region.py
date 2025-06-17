@@ -112,7 +112,7 @@ def upload_to_snowflake(region, **kwargs):
     if not os.path.exists(file_paths['csv_file']):
         raise FileNotFoundError(f"Fichier CSV introuvable : {file_paths['csv_file']}")
 
-    df = pd.read_csv(file_paths['csv_file'], sep='\t', encoding='utf-8')  
+    df = pd.read_csv(file_paths['csv_file'], sep='\t', encoding='ISO-8859-1')  
     df = df[['Périmètre', 'Nature', 'Date', 'Heures', 'Consommation', 'Thermique', 'Eolien', 'Solaire', 'Hydraulique', 'Pompage']]
 
     dtype_mapping = {'object': 'VARCHAR',
