@@ -10,14 +10,11 @@ import pandas as pd
 import unidecode 
 
 # Définition du dossier de stockage
-DATA_DIR = "/opt/airflow/data/region"
+DATA_DIR = "/opt/airflow/data"
 BASE_URL = "https://eco2mix.rte-france.com/download/eco2mix/"
 
 # Liste des régions à traiter
-REGIONS = [
-    "Auvergne-Rhone-Alpes",
-
-]
+REGIONS = [  "Auvergne-Rhone-Alpes",]
 
 def get_region_file_paths(region):
     """Retourne les chemins de fichiers pour une région donnée"""
@@ -38,8 +35,6 @@ def get_region_file_paths(region):
 def download_data(region, **kwargs):
     """Télécharge le fichier ZIP depuis RTE pour une région spécifique."""
     file_paths = get_region_file_paths(region)
-    
-    # Crée le dossier region s'il n'existe pas
     os.makedirs(os.path.join(DATA_DIR, "region"), exist_ok=True)
     os.makedirs(file_paths['extracted_dir'], exist_ok=True)
     
@@ -67,36 +62,18 @@ def unzip_data(region, **kwargs):
         zip_ref.extractall(file_paths['extracted_dir'])
     print(f"Fichiers extraits pour {region} dans : {file_paths['extracted_dir']}")
 
-import pandas as pd
-import os
-
 def rename_xls_to_csv(region, **kwargs):
     """Lit le fichier .xls, sélectionne les colonnes souhaitées, sauvegarde en CSV.
     Pour une région spécifique."""
 
     file_paths = get_region_file_paths(region)
-    
     try:
         if not os.path.exists(file_paths['xls_file']):
             raise FileNotFoundError(f"Le fichier {file_paths['xls_file']} n'a pas été trouvé.")
-        
-        # Lecture du fichier Excel avec pandas
-        df = pd.read_excel(file_paths['xls_file'], engine='openpyxl')  # ou xlrd selon version
-        
-        # Colonnes à garder (adapte selon ton fichier)
-        cols_to_keep = ['Périmètre', 'Nature', 'Date', 'Heures', 'Consommation',
-                        'Thermique', 'Eolien', 'Solaire', 'Hydraulique', 'Pompage']
-
-        # Vérifie que les colonnes existent dans le DataFrame
-        missing_cols = [col for col in cols_to_keep if col not in df.columns]
-        if missing_cols:
-            raise KeyError(f"Colonnes manquantes dans le fichier Excel: {missing_cols}")
-        
-        df = df[cols_to_keep]
+        df = pd.read_excel(file_paths['xls_file'], engine='openpyxl') 
+        df = df[['Périmètre', 'Nature', 'Date', 'Heures', 'Consommation','Thermique', 'Eolien', 'Solaire', 'Hydraulique', 'Pompage']]
         print(df.head)
-        # Sauvegarde en CSV avec le séparateur attendu (;)
         df.to_csv(file_paths['csv_file'], sep='\t', index=False, encoding='ISO-8859-1')
-        
         print(f"Fichier converti et sauvegardé en CSV : {file_paths['csv_file']}")
 
     except Exception as e:
