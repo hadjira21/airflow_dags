@@ -189,6 +189,12 @@ for region in REGIONS:
     )
 
 
+    unzip = PythonOperator(
+        task_id=f'unzip{region_task_id}',
+        python_callable=unzip_data,
+        op_kwargs={'region': region},
+        dag=dag,
+    )
     convert_to_csv = PythonOperator(
         task_id=f'convert_xls_to_clean_csv_{region_task_id}',
         python_callable=convert_xls_to_clean_csv,
@@ -205,4 +211,4 @@ for region in REGIONS:
     #     dag=dag  
     # )
 
-    download_task >> convert_to_csv 
+    download_task >> unzip >> convert_to_csv 
