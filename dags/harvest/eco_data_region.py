@@ -71,7 +71,7 @@ def rename_xls_to_csv(region, **kwargs):
         if not os.path.exists(file_paths['xls_file']):
             raise FileNotFoundError(f"Le fichier {file_paths['xls_file']} n'a pas été trouvé.")
         df = pd.read_excel(file_paths['xls_file'], engine='openpyxl') 
-        df = df[['Périmètre', 'Nature', 'Date', 'Heures', 'Consommation','Thermique', 'Eolien', 'Solaire', 'Hydraulique', 'Pompage']]
+        df = df[['Perimetre', 'Nature', 'Date', 'Heures', 'Consommation','Thermique', 'Eolien', 'Solaire', 'Hydraulique', 'Pompage']]
         print(df.head)
         df.to_csv(file_paths['csv_file'], sep='\t', index=False, encoding='ISO-8859-1')
         print(f"Fichier converti et sauvegardé en CSV : {file_paths['csv_file']}")
