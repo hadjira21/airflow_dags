@@ -10,7 +10,7 @@ import pandas as pd
 import unidecode 
 
 # Définition du dossier de stockage
-DATA_DIR = "/opt/airflow/data"
+DATA_DIR = "/opt/airflow/data/test_region"
 ZIP_FILE = os.path.join(DATA_DIR, "eCO2mix_RTE_En-cours-TR.zip")
 EXTRACTED_DIR = os.path.join(DATA_DIR, "eCO2mix_RTE_En-cours-TR")
 CSV_DIR = os.path.join(DATA_DIR, "csv_files")  # Dossier pour les fichiers CSV
