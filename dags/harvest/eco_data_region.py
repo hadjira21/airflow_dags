@@ -35,9 +35,8 @@ def get_region_file_paths(region):
         'csv_file': csv_file
     }
 
-def download_data(**context):
+def download_data(region, **kwargs):
     """Télécharge le fichier ZIP depuis RTE pour une région spécifique."""
-    region = context['params']['region']
     file_paths = get_region_file_paths(region)
     
     os.makedirs(DATA_DIR, exist_ok=True)
@@ -50,6 +49,8 @@ def download_data(**context):
         print(f"Fichier téléchargé avec succès pour {region}: {file_paths['zip_file']}")
     else:
         raise Exception(f"Erreur lors du téléchargement pour {region}: {result.stderr}")
+
+# Modifiez de la même manière toutes les autres fonctions...
 
 def unzip_data(**context):
     """Décompresse le fichier ZIP pour une région spécifique."""
@@ -231,16 +232,16 @@ for region in REGIONS:
     region_task_id = f"process_{region.lower().replace('-', '_')}"
     
     download_task = PythonOperator(
-        task_id=f"download_{region_task_id}",
-        python_callable=download_data,
-        op_kwargs={'region': region},
-        dag=dag,
+    task_id=f"download_{region_task_id}",
+    python_callable=download_data,
+    op_kwargs={'region': region},  
+    dag=dag,
     )
 
     unzip_task = PythonOperator(
         task_id=f"unzip_{region_task_id}",
         python_callable=unzip_data,
-        op_kwargs={'region': region},
+        op_kwargs={'region': region}, 
         dag=dag,
     )
 
@@ -272,4 +273,4 @@ for region in REGIONS:
         dag=dag  
     )
 
-    download_task >> unzip_task >> rename_task >> read_task >> transform_task >> load_task
+    download_task # >> unzip_task >> rename_task >> read_task >> transform_task >> load_task
