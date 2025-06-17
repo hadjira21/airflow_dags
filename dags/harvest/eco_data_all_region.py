@@ -12,8 +12,6 @@ import unidecode
 BASE_DIR = "/opt/airflow/data"
 REGIONS = [
     "Auvergne-Rhone-Alpes",
-    "Bretagne",
-    "Nouvelle-Aquitaine",
 ]
 
 def get_paths(region):
@@ -164,7 +162,8 @@ dag = DAG(
 )
 
 for region in REGIONS:
-    region_key = region.lower().replace('-', '_').replace(' ', '_')
+    region_key = region
+    print(region)
 
     download_task = PythonOperator(
         task_id=f"download_data_{region_key}",
@@ -208,4 +207,4 @@ for region in REGIONS:
         dag=dag,
     )
 
-    download_task >> unzip_task >> rename_task >> read_task >> transform_task >> upload_task
+    download_task # >> unzip_task >> rename_task >> read_task >> transform_task >> upload_task
