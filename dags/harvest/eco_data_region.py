@@ -13,7 +13,17 @@ import unidecode
 BASE_DIR = "/opt/airflow/data"
 REGIONS = {
     "auvergne_rhone_alpes": "https://eco2mix.rte-france.com/download/eco2mix/eCO2mix_RTE_Auvergne-Rhone-Alpes_En-cours-TR.zip",
-    "ile-de-france": "https://eco2mix.rte-france.com/download/eco2mix/eCO2mix_RTE_Ile-de-France_En-cours-TR.zip"
+    "ile-de-france": "https://eco2mix.rte-france.com/download/eco2mix/eCO2mix_RTE_Ile-de-France_En-cours-TR.zip",
+    'Bourgogne-Franche-Comte':"https://eco2mix.rte-france.com/download/eco2mix/eCO2mix_RTE_Bourgogne-Franche-Comte_En-cours-TR.zip",
+    'Bretagne':"https://eco2mix.rte-france.com/download/eco2mix/eCO2mix_RTE_Bretagne_En-cours-TR.zip",
+    'Centre-Val-de-Loire':"https://eco2mix.rte-france.com/download/eco2mix/eCO2mix_RTE_Centre-Val-de-Loire_En-cours-TR.zip",
+    'Grand-Est':"https://eco2mix.rte-france.com/download/eco2mix/eCO2mix_RTE_Grand-Est_En-cours-TR.zip",
+    'Hauts-de-France':"https://eco2mix.rte-france.com/download/eco2mix/eCO2mix_RTE_Hauts-de-France_En-cours-TR.zip",
+    'Normandie':"https://eco2mix.rte-france.com/download/eco2mix/eCO2mix_RTE_Normandie_En-cours-TR.zip",
+    'Nouvelle-Aquitaine':'https://eco2mix.rte-france.com/download/eco2mix/eCO2mix_RTE_Nouvelle-Aquitaine_En-cours-TR.zip',
+    'Occitanie':'https://eco2mix.rte-france.com/download/eco2mix/eCO2mix_RTE_Occitanie_En-cours-TR.zip',
+    'PACA':'https://eco2mix.rte-france.com/download/eco2mix/eCO2mix_RTE_PACA_En-cours-TR.zip',
+    'Pays-de-la-Loire':'https://eco2mix.rte-france.com/download/eco2mix/eCO2mix_RTE_Pays-de-la-Loire_En-cours-TR.zip',
 }
 
 SELECTED_COLUMNS = ["Perimetre", "Nature", "Date", "Heures", "Consommation", "Thermique", "Nucleaire", 'Solaire', 'Hydraulique']
@@ -97,6 +107,8 @@ def upload_to_snowflake_combined():
     """)
 
     stage_name = 'ATMOSUD_STAGE'
+    snowflake_hook.run(f"REMOVE @{stage_name}/eco2mix_combined.csv")
+
     snowflake_hook.run(f"PUT file://{CSV_FILE} @{stage_name}")
 
     snowflake_hook.run(f"""
