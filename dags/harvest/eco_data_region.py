@@ -120,59 +120,59 @@ def upload_to_snowflake(region, **kwargs):
     print(df.head())
     df = df[['Périmètre', 'Nature', 'Date', 'Heures', 'Consommation', 'Thermique', 'Eolien', 'Solaire', 'Hydraulique', 'Pompage']]
     print(df.head())
-    # dtype_mapping = {
-    #     'object': 'VARCHAR',
-    #     'float64': 'FLOAT',
-    #     'int64': 'INT',
-    #     'bool': 'BOOLEAN',
-    #     'datetime64[ns]': 'TIMESTAMP'
-    # }
+    dtype_mapping = {
+        'object': 'VARCHAR',
+        'float64': 'FLOAT',
+        'int64': 'INT',
+        'bool': 'BOOLEAN',
+        'datetime64[ns]': 'TIMESTAMP'
+    }
 
-    # columns_sql = []
-    # for col in df.columns:
-    #     col_type = dtype_mapping.get(str(df[col].dtype), 'VARCHAR')
-    #     safe_col = col.replace(" ", "_").replace("-", "_").replace("é","e").replace("É","E").upper()
-    #     columns_sql.append(f'"{safe_col}" {col_type}')
+    columns_sql = []
+    for col in df.columns:
+        col_type = dtype_mapping.get(str(df[col].dtype), 'VARCHAR')
+        safe_col = col.replace(" ", "_").replace("-", "_").replace("é","e").replace("É","E").upper()
+        columns_sql.append(f'"{safe_col}" {col_type}')
     
-    # create_sql = f"""
-    # CREATE OR REPLACE TABLE eco2_data_regional (
-    #     {', '.join(columns_sql)}
-    # );
-    # """
+    create_sql = f"""
+    CREATE OR REPLACE TABLE eco2_data_regional (
+        {', '.join(columns_sql)}
+    );
+    """
 
-    # snowflake_hook.run(create_sql)
-    # print("Table créée ou remplacée avec succès.")
+    snowflake_hook.run(create_sql)
+    print("Table créée ou remplacée avec succès.")
 
-    # # Upload fichier dans stage Snowflake
-    # stage_name = 'RTE_STAGE'
-    # csv_file = file_paths['csv_file']
-    # csv_filename = os.path.basename(csv_file)
+    # Upload fichier dans stage Snowflake
+    stage_name = 'RTE_STAGE'
+    csv_file = file_paths['csv_file']
+    csv_filename = os.path.basename(csv_file)
 
-    # put_command = f"PUT 'file://{csv_file}' @{stage_name} OVERWRITE = TRUE"
-    # snowflake_hook.run(put_command)
-    # print(f"Fichier chargé dans stage {stage_name}")
+    put_command = f"PUT 'file://{csv_file}' @{stage_name} OVERWRITE = TRUE"
+    snowflake_hook.run(put_command)
+    print(f"Fichier chargé dans stage {stage_name}")
 
-    # # COPY INTO sans colonne REGION car pas dans la table
-    # nb_cols = len(df.columns)
-    # select_expr = ", ".join([f"${i}" for i in range(1, nb_cols + 1)])
+    # COPY INTO sans colonne REGION car pas dans la table
+    nb_cols = len(df.columns)
+    select_expr = ", ".join([f"${i}" for i in range(1, nb_cols + 1)])
 
-    # copy_query = f"""
-    # COPY INTO eco2_data_regional
-    # FROM @{stage_name}/{csv_filename}
-    # FILE_FORMAT = (
-    #     TYPE = 'CSV',
-    #     SKIP_HEADER = 1,
-    #     FIELD_DELIMITER = ';',
-    #     TRIM_SPACE = TRUE,
-    #     FIELD_OPTIONALLY_ENCLOSED_BY = '"',
-    #     REPLACE_INVALID_CHARACTERS = TRUE
-    # )
-    # FORCE = TRUE
-    # ON_ERROR = 'CONTINUE';
-    # """
+    copy_query = f"""
+    COPY INTO eco2_data_regional
+    FROM @{stage_name}/{csv_filename}
+    FILE_FORMAT = (
+        TYPE = 'CSV',
+        SKIP_HEADER = 1,
+        FIELD_DELIMITER = ';',
+        TRIM_SPACE = TRUE,
+        FIELD_OPTIONALLY_ENCLOSED_BY = '"',
+        REPLACE_INVALID_CHARACTERS = TRUE
+    )
+    FORCE = TRUE
+    ON_ERROR = 'CONTINUE';
+    """
 
-    # snowflake_hook.run(copy_query)
-    # print(f"Données pour {region} insérées avec succès dans Snowflake.")
+    snowflake_hook.run(copy_query)
+    print(f"Données pour {region} insérées avec succès dans Snowflake.")
 
 
 default_args = {
