@@ -52,9 +52,8 @@ def download_data(region, **kwargs):
 
 # Modifiez de la même manière toutes les autres fonctions...
 
-def unzip_data(**context):
+def unzip_data(region, **kwargs):
     """Décompresse le fichier ZIP pour une région spécifique."""
-    region = context['params']['region']
     file_paths = get_region_file_paths(region)
 
     if not os.path.exists(file_paths['zip_file']):
@@ -65,9 +64,9 @@ def unzip_data(**context):
         zip_ref.extractall(file_paths['extracted_dir'])
     print(f"Fichiers extraits pour {region} dans : {file_paths['extracted_dir']}")
 
-def rename_xls_to_csv(**context):
+def rename_xls_to_csv(region, **kwargs):
     """Renomme le fichier .xls en .csv pour une région spécifique."""
-    region = context['params']['region']
+
     file_paths = get_region_file_paths(region)
     
     try:
@@ -79,9 +78,8 @@ def rename_xls_to_csv(**context):
     except Exception as e:
         print(f"Une erreur est survenue : {e}")
 
-def read_data(**context):
+def read_data(region, **kwargs):
     """Lit et affiche un aperçu des données pour une région spécifique."""
-    region = context['params']['region']
     file_paths = get_region_file_paths(region)
     
     if not os.path.exists(file_paths['csv_file']):
@@ -94,9 +92,8 @@ def read_data(**context):
     except Exception as e:
         print(f"Erreur lors de la lecture du fichier CSV : {e}")
 
-def transform_data(**context):
+def transform_data(region, **kwargs):
     """Supprime les accents des colonnes et des valeurs texte pour une région spécifique."""
-    region = context['params']['region']
     file_paths = get_region_file_paths(region)
     
     if not os.path.exists(file_paths['csv_file']):
@@ -118,9 +115,8 @@ def transform_data(**context):
         print(f"Erreur pendant la transformation : {e}")
         raise
 
-def upload_to_snowflake(**context):
+def upload_to_snowflake(region, **kwargs):
     """Charge les données dans Snowflake pour une région spécifique."""
-    region = context['params']['region']
     file_paths = get_region_file_paths(region)
     
     conn_params = {
