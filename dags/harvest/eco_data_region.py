@@ -53,46 +53,25 @@ def download_data(region, **kwargs):
 
 # Modifiez de la même manière toutes les autres fonctions...
 
-def unzip_data(region, **kwargs):
-    """Décompresse le fichier ZIP pour une région spécifique."""
+def convert_xls_to_clean_csv(region, **kwargs):
+    """Convertit le fichier XLS en CSV propre avec colonnes sélectionnées."""
     file_paths = get_region_file_paths(region)
 
-    if not os.path.exists(file_paths['zip_file']):
-        raise FileNotFoundError(f"Le fichier ZIP n'existe pas : {file_paths['zip_file']}")
-
-    os.makedirs(file_paths['extracted_dir'], exist_ok=True)
-    with zipfile.ZipFile(file_paths['zip_file'], 'r') as zip_ref:
-        zip_ref.extractall(file_paths['extracted_dir'])
-    print(f"Fichiers extraits pour {region} dans : {file_paths['extracted_dir']}")
-
-def rename_xls_to_csv(region, **kwargs):
-    """Renomme le fichier .xls en .csv pour une région spécifique."""
-
-    file_paths = get_region_file_paths(region)
-    
-    try:
-        if os.path.exists(file_paths['xls_file']):
-            os.rename(file_paths['xls_file'], file_paths['csv_file'])
-            print(f"Fichier renommé de {file_paths['xls_file']} à {file_paths['csv_file']}")
-        else:
-            raise FileNotFoundError(f"Le fichier {file_paths['xls_file']} n'a pas été trouvé.")
-    except Exception as e:
-        print(f"Une erreur est survenue : {e}")
-
-def read_data(region, **kwargs):
-    """Lit et affiche un aperçu des données pour une région spécifique."""
-    file_paths = get_region_file_paths(region)
-    
-    if not os.path.exists(file_paths['csv_file']):
-        raise FileNotFoundError(f"Aucun fichier CSV trouvé : {file_paths['csv_file']}")
+    if not os.path.exists(file_paths['xls_file']):
+        raise FileNotFoundError(f"Le fichier XLS n'existe pas : {file_paths['xls_file']}")
 
     try:
-        df = pd.read_csv(file_paths['csv_file'], encoding='ISO-8859-1', delimiter='\t')
-        df = df[['Périmètre', 'Nature', 'Date', 'Heures', 'Consommation', 'Thermique', 'Eolien', 'Solaire', 'Hydraulique', 'Pompage']]
-        print(f"Aperçu des données pour {region}:")
-        print(df.head())
+        # Lecture du fichier .xls
+        df = pd.read_excel(file_paths['xls_file'], sheet_name=0)
+                
+        df_clean = df[['Périmètre', 'Nature', 'Date', 'Heures', 'Consommation', 'Thermique', 'Eolien', 'Solaire','Hydraulique', 'Pompage']]
+
+        df_clean.to_csv(file_paths['csv_file'], sep=';', index=False, encoding='utf-8')
+        print(f"Fichier nettoyé sauvegardé en CSV : {file_paths['csv_file']}")
+
     except Exception as e:
-        print(f"Erreur lors de la lecture du fichier CSV : {e}")
+        print(f"Erreur lors de la conversion de {file_paths['xls_file']} : {e}")
+
 
 
 def upload_to_snowflake(region, **kwargs):
@@ -198,26 +177,14 @@ for region in REGIONS:
     dag=dag,
     )
 
-    unzip_task = PythonOperator(
-        task_id=f"unzip_{region_task_id}",
-        python_callable=unzip_data,
-        op_kwargs={'region': region}, 
-        dag=dag,
-    )
 
-    rename_task = PythonOperator(
-        task_id=f'rename_{region_task_id}',
-        python_callable=rename_xls_to_csv,
+    convert_to_csv = PythonOperator(
+        task_id=f'convert_xls_to_clean_csv_{region_task_id}',
+        python_callable=convert_xls_to_clean_csv,
         op_kwargs={'region': region},
         dag=dag,
     )
 
-    read_task = PythonOperator(
-        task_id=f"read_{region_task_id}",
-        python_callable=read_data,
-        op_kwargs={'region': region},
-        dag=dag,
-    )
 
     
     load_task = PythonOperator(
@@ -227,4 +194,4 @@ for region in REGIONS:
         dag=dag  
     )
 
-    download_task >> unzip_task >> rename_task >> read_task 
+    download_task >> convert_to_csv 
