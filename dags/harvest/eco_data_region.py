@@ -93,7 +93,6 @@ def read_data(region, **kwargs):
     except Exception as e:
         print(f"Erreur lors de la lecture du fichier CSV : {e}")
 
-
 def upload_to_snowflake(region, **kwargs):
     conn_params = {
         'user': 'HADJIRA25', 
@@ -113,13 +112,10 @@ def upload_to_snowflake(region, **kwargs):
     if not os.path.exists(file_paths['csv_file']):
         raise FileNotFoundError(f"Fichier CSV introuvable : {file_paths['csv_file']}")
 
-    # Lecture CSV avec encodage latin1 et séparateur ';'
-    df = pd.read_csv(file_paths['csv_file'], sep='\t', encoding='ISO-8859-1')
-    print(df.head())
-    # df = df[['Périmètre', 'Nature', 'Date', 'Heures', 'Consommation', 'Thermique', 'Eolien', 'Solaire', 'Hydraulique', 'Pompage']]
-    print(df.head())
-    dtype_mapping = {
-        'object': 'VARCHAR',
+    df = pd.read_csv(file_paths['csv_file'], sep='\t', encoding='utf-8')  
+    df = df[['Périmètre', 'Nature', 'Date', 'Heures', 'Consommation', 'Thermique', 'Eolien', 'Solaire', 'Hydraulique', 'Pompage']]
+
+    dtype_mapping = {'object': 'VARCHAR',
         'float64': 'FLOAT',
         'int64': 'INT',
         'bool': 'BOOLEAN',
@@ -141,7 +137,6 @@ def upload_to_snowflake(region, **kwargs):
     snowflake_hook.run(create_sql)
     print("Table créée ou remplacée avec succès.")
 
-    # Upload fichier dans stage Snowflake
     stage_name = 'RTE_STAGE'
     csv_file = file_paths['csv_file']
     csv_filename = os.path.basename(csv_file)
@@ -150,27 +145,24 @@ def upload_to_snowflake(region, **kwargs):
     snowflake_hook.run(put_command)
     print(f"Fichier chargé dans stage {stage_name}")
 
-    # COPY INTO sans colonne REGION car pas dans la table
     nb_cols = len(df.columns)
-    select_expr = ", ".join([f"${i}" for i in range(1, nb_cols + 1)])
 
     copy_query = f"""
     COPY INTO eco2_data_regional
     FROM @{stage_name}/{csv_filename}
-    FILE_FORMAT = (
-        TYPE = 'CSV',
+    FILE_FORMAT = ( TYPE = 'CSV',
         SKIP_HEADER = 1,
         FIELD_DELIMITER = ';',
         TRIM_SPACE = TRUE,
         FIELD_OPTIONALLY_ENCLOSED_BY = '"',
-        REPLACE_INVALID_CHARACTERS = TRUE
-    )
+        REPLACE_INVALID_CHARACTERS = TRUE )
     FORCE = TRUE
     ON_ERROR = 'CONTINUE';
     """
 
     snowflake_hook.run(copy_query)
     print(f"Données pour {region} insérées avec succès dans Snowflake.")
+
 
 
 default_args = {
