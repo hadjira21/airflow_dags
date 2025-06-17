@@ -147,10 +147,19 @@ def upload_to_snowflake(region, **kwargs):
 
     nb_cols = len(df.columns)
 
-    columns_list = ['PERIMETRE', 'NATURE', 'DATE', 'HEURES', 'CONSOMMATION', 'THERMIQUE', 'EOLIEN', 'SOLAIRE', 'HYDRAULIQUE', 'POMPAGE']
+# Récupérer les colonnes existantes dans la table Snowflake
+    columns_query = """
+    SELECT COLUMN_NAME
+    FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = 'RTE' AND TABLE_NAME = 'ECO2_DATA_REGIONAL'
+    ORDER BY ORDINAL_POSITION
+    """
 
+    columns = snowflake_hook.get_pandas_df(columns_query)['COLUMN_NAME'].tolist()
+
+    # Construire la requête COPY INTO avec ces colonnes
     copy_query = f"""
-    COPY INTO eco2_data_regional ({', '.join(columns_list)})
+    COPY INTO eco2_data_regional ({', '.join(columns)})
     FROM @{stage_name}/{csv_filename}
     FILE_FORMAT = (
         TYPE = 'CSV',
@@ -163,6 +172,8 @@ def upload_to_snowflake(region, **kwargs):
     FORCE = TRUE
     ON_ERROR = 'CONTINUE';
     """
+    snowflake_hook.run(copy_query)
+
 
 
     snowflake_hook.run(copy_query)
