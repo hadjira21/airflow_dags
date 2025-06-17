@@ -60,7 +60,7 @@ def transform_data():
     try:
         df = pd.read_csv(CSV_PATH, encoding='ISO-8859-1', delimiter=';')
         df.columns = [unidecode.unidecode(col.strip()).upper().replace(" ", "_").replace("-", "_") for col in df.columns]
-        df.to_csv(CSV_PATH, index=False, encoding='utf-8', sep='\t')  # tab delimiter pour Snowflake
+        df.to_csv(CSV_PATH, index=False, encoding='utf-8', sep=';')  
         print("Colonnes nettoyées et fichier transformé.")
     except Exception as e:
         print(f"Erreur transformation : {e}")
