@@ -73,7 +73,7 @@ def transform_data():
     df = df[[col for col in selected_cols_clean if col in df.columns]]
 
     # Supprimer les lignes contenant '-', 'ND', '--', ou '' dans n'importe quelle colonne
-    df = df[~df.isin(["-", "ND", "--", ""]).any(axis=1)]
+    # df = df[~df.isin(["-", "ND", "--", ""]).any(axis=1)]
 
     # Nettoyer les accents dans les colonnes texte
     for col in df.select_dtypes(include='object').columns:
