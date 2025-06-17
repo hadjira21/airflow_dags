@@ -163,4 +163,4 @@ transform_task = PythonOperator(task_id="transform_data", python_callable=transf
 upload_task = PythonOperator(task_id="upload_to_snowflake", python_callable=upload_to_snowflake, dag=dag)
 
 # --- Orchestration ---
-download_task >> unzip_task >> rename_task >> read_task >> transform_task >> upload_task
+download_task >> unzip_task  #>> rename_task >> read_task >> transform_task >> upload_task
