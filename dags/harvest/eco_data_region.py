@@ -12,9 +12,15 @@ import unidecode
 # Définition du dossier de stockage
 DATA_DIR = "/opt/airflow/data"
 
+
+
+DATA_DIR = "/opt/airflow/data/test_region"
+ZIP_FILE = os.path.join(DATA_DIR, "test_region.zip")
 EXTRACTED_DIR = os.path.join(DATA_DIR, "test_region")
-ZIP_FILE = os.path.join(EXTRACTED_DIR, "test_region.zip")
-CSV_DIR = os.path.join(DATA_DIR, "csv_files")  # Dossier pour les fichiers CSV
+
+
+
+
 
 def download_data():
     """Télécharge le fichier ZIP depuis RTE."""
