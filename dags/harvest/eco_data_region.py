@@ -190,7 +190,7 @@ dag = DAG("download_data_eco2mix_test", default_args=default_args,
     start_date=datetime(2025, 6, 1),
     catchup=False,
 )
-xls_file_path = os.path.join(EXTRACTED_DIR, "test_region.xls")
+xls_file_path = os.path.join(EXTRACTED_DIR, "eCO2mix_RTE_Auvergne-Rhone-Alpes_En-cours-TR.xls")
 csv_file_path = os.path.join(EXTRACTED_DIR, "test_region.csv")
 
 download_task = PythonOperator(task_id="download_data_eco2", python_callable=download_data,  dag=dag,)
