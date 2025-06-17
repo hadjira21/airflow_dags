@@ -140,31 +140,36 @@ dag = DAG(
 )
 
 for region, url in REGIONS.items():
-    with TaskGroup(group_id=f"{region}_tasks", dag=dag) as tg:
+    with TaskGroup(group_id=f"{region}_tasks", dag=dag) as tg:  # <-- dag=dag ajouté ici
         download_task = PythonOperator(
             task_id=f"download_{region}",
             python_callable=download_data,
             op_kwargs={"region": region, "url": url},
+            dag=dag,  # <-- dag=dag ajouté ici
         )
         unzip_task = PythonOperator(
             task_id=f"unzip_{region}",
             python_callable=unzip_data,
             op_kwargs={"region": region},
+            dag=dag,  # <-- dag=dag ajouté ici
         )
         rename_task = PythonOperator(
             task_id=f"rename_{region}",
             python_callable=rename_xls_to_csv,
             op_kwargs={"region": region},
+            dag=dag,  # <-- dag=dag ajouté ici
         )
         transform_task = PythonOperator(
             task_id=f"transform_{region}",
             python_callable=transform_data,
             op_kwargs={"region": region},
+            dag=dag,  # <-- dag=dag ajouté ici
         )
         upload_task = PythonOperator(
             task_id=f"upload_{region}_to_snowflake",
             python_callable=upload_to_snowflake,
             op_kwargs={"region": region},
+            dag=dag,  # <-- dag=dag ajouté ici
         )
 
         download_task >> unzip_task >> rename_task >> transform_task >> upload_task
