@@ -36,12 +36,14 @@ def get_region_file_paths(region):
         'csv_file': csv_file
     }
 
-
 def download_data(region, **kwargs):
     """Télécharge le fichier ZIP depuis RTE pour une région spécifique."""
     file_paths = get_region_file_paths(region)
     
-    os.makedirs(DATA_DIR, exist_ok=True)
+    # Crée le dossier region s'il n'existe pas
+    os.makedirs(os.path.join(DATA_DIR, "region"), exist_ok=True)
+    os.makedirs(file_paths['extracted_dir'], exist_ok=True)
+    
     url = f"{BASE_URL}eCO2mix_RTE_{region}_En-cours-TR.zip"
     
     command = ["curl", "-L", "-o", file_paths['zip_file'], url]
