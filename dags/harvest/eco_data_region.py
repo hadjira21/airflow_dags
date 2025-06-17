@@ -18,7 +18,7 @@ REGIONS = [  "Auvergne-Rhone-Alpes",]
 
 def get_region_file_paths(region):
     """Retourne les chemins de fichiers pour une région donnée"""
-    region_dir = os.path.join(DATA_DIR, "region") 
+    region_dir = os.path.join(DATA_DIR) 
     zip_filename = f"eCO2mix_RTE_{region}_En-cours-TR.zip"
     zip_file = os.path.join(region_dir, zip_filename)
     extracted_dir = os.path.join(region_dir, f"eCO2mix_RTE_{region}_En-cours-TR")
