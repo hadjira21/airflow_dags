@@ -55,16 +55,26 @@ def read_data(csv_path):
     except Exception as e:
         print(f"Erreur lors de la lecture du fichier CSV : {e}")
 
-def transform_data(CSV_PATH):
-    if not os.path.exists(CSV_PATH):
-        raise FileNotFoundError(f"Fichier CSV introuvable : {CSV_PATH}")
+
+def transform_data(csv_path):
+    """Supprime les accents des colonnes et des valeurs texte."""
+    if not os.path.exists(csv_path):
+        raise FileNotFoundError(f"Le fichier CSV est introuvable : {csv_path}")
+
     try:
-        df = pd.read_csv(CSV_PATH, encoding='ISO-8859-1', delimiter=';')
-        df.columns = [unidecode.unidecode(col.strip()).upper().replace(" ", "_").replace("-", "_") for col in df.columns]
-        df.to_csv(CSV_PATH, index=False, encoding='utf-8', sep=';')  
-        print("Colonnes nettoyées et fichier transformé.")
+        df = pd.read_csv(csv_path, encoding='ISO-8859-1', delimiter=';')
+
+        # Nettoyage des colonnes
+        df.columns = [unidecode.unidecode(col.strip()) for col in df.columns]
+
+        # Nettoyage des champs texte
+        for col in df.select_dtypes(include='object').columns:
+            df[col] = df[col].apply(lambda x: unidecode.unidecode(str(x)) if pd.notnull(x) else x)
+
+        df.to_csv(csv_path, index=False, encoding='utf-8', sep=';')
+        print("Fichier transformé avec accents supprimés.")
     except Exception as e:
-        print(f"Erreur transformation : {e}")
+        print(f"Erreur pendant la transformation : {e}")
         raise
 
 
