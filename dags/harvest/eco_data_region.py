@@ -159,28 +159,28 @@ def upload_to_snowflake():
     snowflake_hook.run(put_command)
 
     copy_query = """
-COPY INTO eco2_data_test
-FROM (
-    SELECT
-        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
-        $11, $12, $13, $14, $15, $16, $17, $18, $19, $20,
-        $21, $22, $23, $24, $25, $26, $27, $28, $29, $30,
-        $31, $32, $33, $34, $35, $36, $37, $38, $39, $40,
-        $41, $42, $43, $44, $45, $46, $47, $48, $49, $50,
-        $51, $52, $53, $54, $55, $56, $57, $58, $59, $60,
-        $61, $62, $63, $64, $65, $66, $67
-    FROM @RTE_STAGE/eCO2mix_RTE_En-cours.csv
-)
-FILE_FORMAT = (
-    TYPE = 'CSV',
-    SKIP_HEADER = 1,
-    FIELD_DELIMITER = ',',
-    TRIM_SPACE = TRUE,
-    FIELD_OPTIONALLY_ENCLOSED_BY = '"',
-    REPLACE_INVALID_CHARACTERS = TRUE
-)
-FORCE = TRUE
-ON_ERROR = 'CONTINUE';
+    COPY INTO eco2_data_test
+    FROM (
+        SELECT
+            $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
+            $11, $12, $13, $14, $15, $16, $17, $18, $19, $20,
+            $21, $22, $23, $24, $25, $26, $27, $28, $29, $30,
+            $31, $32, $33, $34, $35, $36, $37, $38, $39, $40,
+            $41, $42, $43, $44, $45, $46, $47, $48, $49, $50,
+            $51, $52, $53, $54, $55, $56, $57, $58, $59, $60,
+            $61, $62, $63, $64, $65, $66, $67
+        FROM @RTE_STAGE/eCO2mix_RTE_En-cours.csv
+    )
+    FILE_FORMAT = (
+        TYPE = 'CSV',
+        SKIP_HEADER = 1,
+        FIELD_DELIMITER = '\t',
+        TRIM_SPACE = TRUE,
+        FIELD_OPTIONALLY_ENCLOSED_BY = '"',
+        REPLACE_INVALID_CHARACTERS = TRUE
+    )
+    FORCE = TRUE
+    ON_ERROR = 'CONTINUE';
 
     """
     snowflake_hook.run(copy_query)
