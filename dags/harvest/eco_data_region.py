@@ -73,7 +73,7 @@ def convert_xls_to_clean_csv(region, **kwargs):
 
     try:
         # Lecture du fichier .xls
-        df = pd.read_excel(file_paths['xls_file'])
+        df = pd.read_excel(file_paths['xls_file'], sheet_name=0, engine='xlrd')
                 
         df_clean = df[['Périmètre', 'Nature', 'Date', 'Heures', 'Consommation', 'Thermique', 'Eolien', 'Solaire','Hydraulique', 'Pompage']]
         df_clean.to_csv(file_paths['csv_file'], sep=';', index=False, encoding='utf-8')
