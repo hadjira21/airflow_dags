@@ -117,32 +117,12 @@ def upload_to_snowflake(region, **kwargs):
     put_command = f"PUT 'file://{file_paths['csv_file']}' @RTE_STAGE OVERWRITE = TRUE"
     snowflake_hook.run(put_command)
     print(f"Fichier chargé dans stage RTE_STAGE")
-
     copy_query = f"""
-    COPY INTO eco2_data_regional (
-        "PERIMETRE",
-        "NATURE",
-        "DATE",
-        "HEURES",
-        "CONSOMMATION",
-        "THERMIQUE",
-        "EOLIEN",
-        "SOLAIRE",
-        "HYDRAULIQUE",
-        "POMPAGE"
-    )
-    FROM @RTE_STAGE/{os.path.basename(file_paths['csv_file'])}
-    FILE_FORMAT = (
-        TYPE = 'CSV',
-        SKIP_HEADER = 1,
-        FIELD_DELIMITER = ';',
-        TRIM_SPACE = TRUE,
-        FIELD_OPTIONALLY_ENCLOSED_BY = '"',
-        REPLACE_INVALID_CHARACTERS = TRUE
-    )
+    COPY INTO eco2_data
+    FROM (SELECT $1, $2, $3, $4, $5, $6, $7, $8, $9, $10 FROM @RTE_STAGE/{os.path.basename(file_paths['csv_file'])}
+    FILE_FORMAT = (TYPE = 'CSV', SKIP_HEADER = 1, FIELD_DELIMITER = '\t', TRIM_SPACE = TRUE, FIELD_OPTIONALLY_ENCLOSED_BY = '"', REPLACE_INVALID_CHARACTERS = TRUE)
     FORCE = TRUE
-    ON_ERROR = 'CONTINUE';
-    """
+    ON_ERROR = 'CONTINUE';"""
     snowflake_hook.run(copy_query)
     print(f"Données pour {region} insérées avec succès dans Snowflake.")
 
