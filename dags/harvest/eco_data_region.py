@@ -13,8 +13,6 @@ import unidecode
 BASE_DIR = "/opt/airflow/data"
 REGIONS = {
     "auvergne_rhone_alpes": "https://eco2mix.rte-france.com/download/eco2mix/eCO2mix_RTE_Auvergne-Rhone-Alpes_En-cours-TR.zip",
-    "ile-de-france": "https://eco2mix.rte-france.com/download/eco2mix/eCO2mix_RTE_Ile-de-France_En-cours-TR.zip"
-    # Ajoute d'autres régions ici si nécessaire
 }
 
 SELECTED_COLUMNS = ["Perimetre", "Nature", "Date", "Heures", "Consommation", "Thermique", "Nucleaire", 'Solaire', 'Hydraulique']
