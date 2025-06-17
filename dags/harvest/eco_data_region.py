@@ -15,14 +15,14 @@ REGION = "final_test"
 REGION_DIR = os.path.join(BASE_DIR, REGION)
 ZIP_FILE = os.path.join(REGION_DIR, f"{REGION}.zip")
 EXTRACTED_DIR = REGION_DIR
-XLS_FILE = os.path.join(EXTRACTED_DIR, "eCO2mix_RTE_Ile-de-France_En-cours-TR.xls")
+XLS_FILE = os.path.join(EXTRACTED_DIR, "eCO2mix_RTE_Auvergne-Rhone-Alpes_En-cours-TR.xls")
 CSV_FILE = os.path.join(EXTRACTED_DIR, f"{REGION}.csv")
 
 
 def download_data():
     """Télécharge le fichier ZIP depuis RTE."""
     os.makedirs(REGION_DIR, exist_ok=True)
-    url = "https://eco2mix.rte-france.com/download/eco2mix/eCO2mix_RTE_Ile-de-France_En-cours-TR.zip"
+    url = "https://eco2mix.rte-france.com/download/eco2mix/eCO2mix_RTE_Auvergne-Rhone-Alpes_En-cours-TR.zip"
     command = ["curl", "-L", "-o", ZIP_FILE, url]
     result = subprocess.run(command, capture_output=True, text=True)
 
