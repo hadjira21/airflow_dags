@@ -58,26 +58,40 @@ def read_data():
     print("Aperçu des données :")
     print(df.head())
 def transform_data():
-    """Nettoie les données : supprime les accents, remplace '-' et 'ND' par NaN, et exporte."""
+    """Nettoie les données, sélectionne les colonnes, remplace les valeurs manquantes et exporte."""
     if not os.path.exists(CSV_FILE):
         raise FileNotFoundError(f"Le fichier CSV est introuvable : {CSV_FILE}")
 
-    # Chargement
     df = pd.read_csv(CSV_FILE, encoding='ISO-8859-1', delimiter=';')
 
     # Nettoyage des noms de colonnes
     df.columns = [unidecode.unidecode(col.strip()) for col in df.columns]
+    SELECTED_COLUMNS = [ "Perimetre", "Nature", "Date", "Heures", "Consommation", "Thermique", "Nucleaire",'Solaire', 'Hydraulique']
+    # Sélectionner uniquement les colonnes désirées
+    df = df[[unidecode.unidecode(col) for col in SELECTED_COLUMNS if unidecode.unidecode(col) in df.columns]]
 
-    # Remplacer '-' et 'ND' par NaN dans tout le DataFrame
-    df.replace(["-", "ND", "--", ""], pd.NA, inplace=True)
+    # Remplacer valeurs manquantes
+    df = df[~df.isin(["-", "ND", "--", ""]).any(axis=1)]
 
-    # Nettoyage des valeurs texte (accents)
+    # Nettoyage accents dans les colonnes texte
     for col in df.select_dtypes(include='object').columns:
         df[col] = df[col].apply(lambda x: unidecode.unidecode(str(x)) if pd.notnull(x) else x)
+        print("Colonnes et types estimés :")
+    for col in df.columns:
+        dtype = df[col].dtype
+        if pd.api.types.is_integer_dtype(dtype) or pd.api.types.is_float_dtype(dtype):
+            sql_type = "NUMBER"
+        elif pd.api.types.is_datetime64_any_dtype(dtype):
+            if 'date' in col.lower():
+                sql_type = "DATE"
+            else:
+                sql_type = "TIMESTAMP"
+        else:
+            sql_type = "VARCHAR"
+        print(f"{col} {sql_type},")
+    df.to_csv(CSV_FILE, index=False, encoding='utf-8', sep='\t')
+    print("✅ Données nettoyées, colonnes sélectionnées et exportées.")
 
-    # Réécriture du CSV nettoyé
-    df.to_csv(CSV_FILE, index=False, encoding='utf-8', sep=';')
-    print(" Données transformées : accents supprimés, '-' et 'ND' remplacés.")
 
 
 def upload_to_snowflake():
@@ -103,64 +117,8 @@ def upload_to_snowflake():
         NUCLEAIRE NUMBER,
         EOLIEN NUMBER,
         SOLAIRE NUMBER,
-        HYDRAULIQUE NUMBER,
-        POMPAGE NUMBER,
-        BIOENERGIES NUMBER,
-        STOCKAGE_BATTERIE NUMBER,
-        DESTOCKAGE_BATTERIE NUMBER,
-        EOLIEN_TERRESTRE NUMBER,
-        EOLIEN_OFFSHORE NUMBER,
-        ECH_PHYSIQUES NUMBER,
-        FLUX_AURA_TO_AURA NUMBER,
-        FLUX_BFC_TO_AURA NUMBER,
-        FLUX_BRETAGNE_TO_AURA NUMBER,
-        FLUX_CVL_TO_AURA NUMBER,
-        FLUX_GE_TO_AURA NUMBER,
-        FLUX_HDF_TO_AURA NUMBER,
-        FLUX_IDF_TO_AURA NUMBER,
-        FLUX_NORMANDIE_TO_AURA NUMBER,
-        FLUX_NAQ_TO_AURA NUMBER,
-        FLUX_OCCITANIE_TO_AURA NUMBER,
-        FLUX_PDL_TO_AURA NUMBER,
-        FLUX_PACA_TO_AURA NUMBER,
-        FLUX_AURA_FROM_AURA NUMBER,
-        FLUX_AURA_TO_BFC NUMBER,
-        FLUX_AURA_TO_BRETAGNE NUMBER,
-        FLUX_AURA_TO_CVL NUMBER,
-        FLUX_AURA_TO_GE NUMBER,
-        FLUX_AURA_TO_HDF NUMBER,
-        FLUX_AURA_TO_IDF NUMBER,
-        FLUX_AURA_TO_NORMANDIE NUMBER,
-        FLUX_AURA_TO_NAQ NUMBER,
-        FLUX_AURA_TO_OCCITANIE NUMBER,
-        FLUX_AURA_TO_PDL NUMBER,
-        FLUX_AURA_TO_PACA NUMBER,
-        FLUX_ALLEMAGNE_TO_AURA NUMBER,
-        FLUX_BELGIQUE_TO_AURA NUMBER,
-        FLUX_ESPAGNE_TO_AURA NUMBER,
-        FLUX_ITALIE_TO_AURA NUMBER,
-        FLUX_LUXEMBOURG_TO_AURA NUMBER,
-        FLUX_UK_TO_AURA NUMBER,
-        FLUX_SUISSE_TO_AURA NUMBER,
-        FLUX_AURA_TO_ALLEMAGNE NUMBER,
-        FLUX_AURA_TO_BELGIQUE NUMBER,
-        FLUX_AURA_TO_ESPAGNE NUMBER,
-        FLUX_AURA_TO_ITALIE NUMBER,
-        FLUX_AURA_TO_LUXEMBOURG NUMBER,
-        FLUX_AURA_TO_UK NUMBER,
-        FLUX_AURA_TO_SUISSE NUMBER,
-        TCO_THERMIQUE NUMBER,
-        TCH_THERMIQUE NUMBER,
-        TCO_NUCLEAIRE NUMBER,
-        TCH_NUCLEAIRE NUMBER,
-        TCO_EOLIEN NUMBER,
-        TCH_EOLIEN NUMBER,
-        TCO_SOLAIRE NUMBER,
-        TCH_SOLAIRE NUMBER,
-        TCO_HYDRAULIQUE NUMBER,
-        TCH_HYDRAULIQUE NUMBER,
-        TCO_BIOENERGIES NUMBER,
-        TCH_BIOENERGIES NUMBER
+        HYDRAULIQUE NUMBER
+     
     );""")
 
     stage_name = 'RTE_STAGE'
