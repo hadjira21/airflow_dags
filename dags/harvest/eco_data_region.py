@@ -10,200 +10,172 @@ import pandas as pd
 import unidecode 
 
 # Définition du dossier de stockage
-DATA_DIR = "/opt/airflow/data/region"
-BASE_URL = "https://eco2mix.rte-france.com/download/eco2mix/"
+DATA_DIR = "/opt/airflow/data"
+ZIP_FILE = os.path.join(DATA_DIR, "eCO2mix_RTE_En-cours-TR.zip")
+EXTRACTED_DIR = os.path.join(DATA_DIR, "eCO2mix_RTE_En-cours-TR")
+CSV_DIR = os.path.join(DATA_DIR, "csv_files")  # Dossier pour les fichiers CSV
 
-# Liste des régions à traiter
-REGIONS = [
-    "Auvergne-Rhone-Alpes",
-
-]
-
-def get_region_file_paths(region):
-    """Retourne les chemins de fichiers pour une région donnée"""
-    region_dir = os.path.join(DATA_DIR, "region") 
-    zip_filename = f"eCO2mix_RTE_{region}_En-cours-TR.zip"
-    zip_file = os.path.join(region_dir, zip_filename)
-    extracted_dir = os.path.join(region_dir, f"eCO2mix_RTE_{region}_En-cours-TR")
-    xls_file = os.path.join(extracted_dir, f"eCO2mix_RTE_{region}_En-cours-TR.xls")
-    csv_file = os.path.join(extracted_dir, f"eCO2mix_RTE_{region}_En-cours-TR.csv")
-    
-    return {
-        'zip_file': zip_file,
-        'extracted_dir': extracted_dir,
-        'xls_file': xls_file,
-        'csv_file': csv_file
-    }
-
-def download_data(region, **kwargs):
-    """Télécharge le fichier ZIP depuis RTE pour une région spécifique."""
-    file_paths = get_region_file_paths(region)
-    os.makedirs(os.path.join(DATA_DIR), exist_ok=True)
-    os.makedirs(file_paths['extracted_dir'], exist_ok=True)
-    
-    url = f"{BASE_URL}eCO2mix_RTE_{region}_En-cours-TR.zip"
-    
-    command = ["curl", "-L", "-o", file_paths['zip_file'], url]
+def download_data():
+    """Télécharge le fichier ZIP depuis RTE."""
+    os.makedirs(DATA_DIR, exist_ok=True)
+ 
+    url = "https://eco2mix.rte-france.com/download/eco2mix/eCO2mix_RTE_Auvergne-Rhone-Alpes_En-cours-TR.zip"
+    command = ["curl", "-L", "-o", ZIP_FILE, url]
     result = subprocess.run(command, capture_output=True, text=True)
 
     if result.returncode == 0:
-        print(f"Fichier téléchargé avec succès pour {region}: {file_paths['zip_file']}")
+        print(f"Fichier téléchargé avec succès : {ZIP_FILE}")
     else:
-        raise Exception(f"Erreur lors du téléchargement pour {region}: {result.stderr}")
+        raise Exception(f"Erreur lors du téléchargement : {result.stderr}")
 
-# Modifiez de la même manière toutes les autres fonctions...
+def unzip_data():
+    """Décompresse le fichier ZIP."""
+    if not os.path.exists(ZIP_FILE):
+        raise FileNotFoundError(f"Le fichier ZIP n'existe pas : {ZIP_FILE}")
 
-def unzip_data(region, **kwargs):
-    """Décompresse le fichier ZIP pour une région spécifique."""
-    file_paths = get_region_file_paths(region)
+    os.makedirs(EXTRACTED_DIR, exist_ok=True)
+    with zipfile.ZipFile(ZIP_FILE, 'r') as zip_ref:
+        zip_ref.extractall(EXTRACTED_DIR)
+    print(f"Fichiers extraits dans : {EXTRACTED_DIR}")
 
-    if not os.path.exists(file_paths['zip_file']):
-        raise FileNotFoundError(f"Le fichier ZIP n'existe pas : {file_paths['zip_file']}")
-
-    os.makedirs(file_paths['extracted_dir'], exist_ok=True)
-    with zipfile.ZipFile(file_paths['zip_file'], 'r') as zip_ref:
-        zip_ref.extractall(file_paths['extracted_dir'])
-    print(f"Fichiers extraits pour {region} dans : {file_paths['extracted_dir']}")
-
-def rename_xls_to_csv(region, **kwargs):
-    """Renomme le fichier .xls en .csv pour une région spécifique."""
-
-    file_paths = get_region_file_paths(region)
-    
+def rename_xls_to_csv(xls_path, csv_path):
+    """Renomme le fichier .xls en .csv."""
     try:
-        if os.path.exists(file_paths['xls_file']):
-            os.rename(file_paths['xls_file'], file_paths['csv_file'])
-            print(f"Fichier renommé de {file_paths['xls_file']} à {file_paths['csv_file']}")
+        if os.path.exists(xls_path):
+            os.rename(xls_path, csv_path)
+            print(f"Fichier renommé de {xls_path} à {csv_path}")
         else:
-            raise FileNotFoundError(f"Le fichier {file_paths['xls_file']} n'a pas été trouvé.")
+            raise FileNotFoundError(f"Le fichier {xls_path} n'a pas été trouvé.")
     except Exception as e:
         print(f"Une erreur est survenue : {e}")
 
-def read_data(region, **kwargs):
-    """Lit et affiche un aperçu des données pour une région spécifique."""
-    file_paths = get_region_file_paths(region)
-    
-    if not os.path.exists(file_paths['csv_file']):
-        raise FileNotFoundError(f"Aucun fichier CSV trouvé : {file_paths['csv_file']}")
+def read_data():
+    """Lit et affiche un aperçu des données."""
+    csv_path = os.path.join(EXTRACTED_DIR, "eCO2mix_RTE_En-cours-TR.csv")
+    if not os.path.exists(csv_path):
+        raise FileNotFoundError(f"Aucun fichier CSV trouvé : {csv_path}")
 
     try:
-        df = pd.read_csv(file_paths['csv_file'], encoding='ISO-8859-1', delimiter='\t')
-        df = df[[ "Périmètre", "Nature"]]
-        df.to_csv(file_paths['csv_file'], encoding='ISO-8859-1', delimiter='\t')
-        df = pd.read_csv(file_paths['csv_file'], encoding='ISO-8859-1', delimiter='\t')
-
-        print(f"Aperçu des données pour {region}:")
+        df = pd.read_csv(csv_path, encoding='ISO-8859-1', delimiter=';')
+        print("Aperçu des données :")
         print(df.head())
     except Exception as e:
         print(f"Erreur lors de la lecture du fichier CSV : {e}")
 
-# upload_to_snowflake simplified - no CREATE TABLE
+def transform_data():
+    """Supprime les accents des colonnes et des valeurs texte."""
+    csv_path = os.path.join(EXTRACTED_DIR, "eCO2mix_RTE_En-cours-TR.csv")
+    if not os.path.exists(csv_path):
+        raise FileNotFoundError(f"Le fichier CSV est introuvable : {csv_path}")
 
-def upload_to_snowflake(region, **kwargs):
-    conn_params = {
-        'user': 'HADJIRA25', 
-        'password': '42XCDpmzwMKxRww', 
-        'account': 'TRMGRRV-JN45028',
-        'warehouse': 'INGESTION_WH', 
-        'database': 'BRONZE',  
-        'schema': 'RTE'
-    }
-    snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_conn', **conn_params)
-    
+    try:
+        df = pd.read_csv(csv_path, encoding='ISO-8859-1', delimiter=';')
+
+        # Nettoyage des colonnes
+        df.columns = [unidecode.unidecode(col.strip()) for col in df.columns]
+
+        # Nettoyage des champs texte
+        for col in df.select_dtypes(include='object').columns:
+            df[col] = df[col].apply(lambda x: unidecode.unidecode(str(x)) if pd.notnull(x) else x)
+
+        df.to_csv(csv_path, index=False, encoding='utf-8', sep=';')
+        print("Fichier transformé avec accents supprimés.")
+    except Exception as e:
+        print(f"Erreur pendant la transformation : {e}")
+        raise
+
+def upload_to_snowflake():
+    conn_params = {'user': 'HADJIRA25', 'password' : '42XCDpmzwMKxRww', 'account': 'TRMGRRV-JN45028',
+    'warehouse': 'INGESTION_WH', 'database': 'BRONZE',  'schema': "RTE" }
+    snowflake_hook = SnowflakeHook( snowflake_conn_id='snowflake_conn', **conn_params)
     snowflake_hook.run(f"USE DATABASE {conn_params['database']}")
     snowflake_hook.run(f"USE SCHEMA {conn_params['schema']}")
 
-    file_paths = get_region_file_paths(region)
+    create_table_sql = f"""
+ CREATE OR REPLACE TABLE eco2_data_test (
+    PERIMETRE VARCHAR,
+    NATURE VARCHAR,
+    DATE DATE,
+    HEURES TIME,
+    CONSOMMATION NUMBER,
+    PREVISION_J_1 NUMBER,
+    PREVISION_J NUMBER,
+    FIOUL NUMBER,
+    CHARBON NUMBER,
+    GAZ NUMBER,
+    NUCLEAIRE NUMBER,
+    EOLIEN NUMBER,
+    SOLAIRE NUMBER,
+    HYDRAULIQUE NUMBER,
+    POMPAGE NUMBER,
+    BIOENERGIES NUMBER,
+    ECH_PHYSIQUES NUMBER,
+    TAUX_DE_CO2 NUMBER,
+    ECH_COMM_ANGLETERRE NUMBER,
+    ECH_COMM_ESPAGNE NUMBER,
+    ECH_COMM_ITALIE NUMBER,
+    ECH_COMM_SUISSE NUMBER,
+    ECH_COMM_ALLEMAGNE_BELGIQUE NUMBER,
+    FIOUL_TAC NUMBER,
+    FIOUL_COGEN NUMBER,
+    FIOUL_AUTRES NUMBER,
+    GAZ_TAC NUMBER,
+    GAZ_COGEN NUMBER,
+    GAZ_CCG NUMBER,
+    GAZ_AUTRES NUMBER,
+    HYDRO_FDE NUMBER,
+    HYDRO_LACS NUMBER,
+    HYDRO_STEP NUMBER,
+    BIO_DECHETS NUMBER,
+    BIO_BIOMASSE NUMBER,
+    BIO_BIOGAZ NUMBER,
+    STOCKAGE_BATTERIE NUMBER,
+    DESTOCKAGE_BATTERIE NUMBER,
+    EOLIEN_TERRESTRE NUMBER,
+    EOLIEN_OFFSHORE NUMBER,
+    CONSOMMATION_CORRIGEE NUMBER
+);
+"""
     
-    if not os.path.exists(file_paths['csv_file']):
-        raise FileNotFoundError(f"Fichier CSV introuvable : {file_paths['csv_file']}")
-
-    put_command = f"PUT 'file://{file_paths['csv_file']}' @RTE_STAGE OVERWRITE = TRUE"
+    snowflake_hook.run(create_table_sql)
+    print("Table crée avec succès dans Snowflake.")
+    file_path = '/opt/airflow/data/eCO2mix_RTE_En-cours-TR/eCO2mix_RTE_En-cours-TR.csv'
+    stage_name = 'RTE_STAGE'
+    put_command = f"PUT file://{file_path} @{stage_name}"
     snowflake_hook.run(put_command)
-    print(f"Fichier chargé dans stage RTE_STAGE")
-
     copy_query = f"""
-    COPY INTO eco2_data_regional (
-        "PERIMETRE",
-        "NATURE",
-        "DATE",
-        "HEURES",
-        "CONSOMMATION",
-        "THERMIQUE",
-        "EOLIEN",
-        "SOLAIRE",
-        "HYDRAULIQUE",
-        "POMPAGE"
-    )
-    FROM @RTE_STAGE/{os.path.basename(file_paths['csv_file'])}
-    FILE_FORMAT = (
-        TYPE = 'CSV',
-        SKIP_HEADER = 1,
-        FIELD_DELIMITER = ';',
-        TRIM_SPACE = TRUE,
-        FIELD_OPTIONALLY_ENCLOSED_BY = '"',
-        REPLACE_INVALID_CHARACTERS = TRUE
-    )
+    COPY INTO eco2_data_test
+    FROM (SELECT $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, 
+    $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, $36, $37, $38, 
+    $39, $40, $41 FROM @RTE_STAGE/eCO2mix_RTE_En-cours-TR.csv )
+    FILE_FORMAT = (TYPE = 'CSV', SKIP_HEADER = 1, FIELD_DELIMITER = '\t', TRIM_SPACE = TRUE, FIELD_OPTIONALLY_ENCLOSED_BY = '"', REPLACE_INVALID_CHARACTERS = TRUE)
     FORCE = TRUE
-    ON_ERROR = 'CONTINUE';
-    """
+    ON_ERROR = 'CONTINUE';"""
     snowflake_hook.run(copy_query)
-    print(f"Données pour {region} insérées avec succès dans Snowflake.")
+    print("Données insérées avec succès dans Snowflake.")
+default_args = { "owner": "airflow", "start_date": datetime(2025, 3, 20), "retries": 0,}
 
-
-
-
-default_args = {
-    "owner": "airflow",
-    "start_date": datetime(2025, 3, 20),
-    "retries": 0,
-}
-
-dag = DAG(
-    "download_data_eco2mix_regional",
-    default_args=default_args,
+dag = DAG("download_data_eco2mix_test", default_args=default_args, 
     schedule_interval="@daily",
     start_date=datetime(2025, 6, 1),
     catchup=False,
 )
+xls_file_path = os.path.join(EXTRACTED_DIR, "eCO2mix_RTE_En-cours-TR.xls")
+csv_file_path = os.path.join(EXTRACTED_DIR, "eCO2mix_RTE_En-cours-TR.csv")
 
-for region in REGIONS:
-    region_task_id = f"process_{region.lower().replace('-', '_')}"
-    
-    download_task = PythonOperator(
-    task_id=f"download_{region_task_id}",
-    python_callable=download_data,
-    op_kwargs={'region': region},  
-    dag=dag,
-    )
+download_task = PythonOperator(task_id="download_data_eco2", python_callable=download_data,  dag=dag,)
 
-    unzip_task = PythonOperator(
-        task_id=f"unzip_{region_task_id}",
-        python_callable=unzip_data,
-        op_kwargs={'region': region}, 
-        dag=dag,
-    )
+unzip_task = PythonOperator( task_id="unzip_data", python_callable=unzip_data, dag=dag,)
 
-    rename_task = PythonOperator(
-        task_id=f'rename_{region_task_id}',
-        python_callable=rename_xls_to_csv,
-        op_kwargs={'region': region},
-        dag=dag,
-    )
+rename_task = PythonOperator(task_id='rename_xls_to_csv', python_callable=rename_xls_to_csv,op_args=[xls_file_path, csv_file_path],dag=dag,)
 
-    read_task = PythonOperator(
-        task_id=f"read_{region_task_id}",
-        python_callable=read_data,
-        op_kwargs={'region': region},
-        dag=dag,
-    )
+read_task = PythonOperator(task_id="read_data", python_callable=read_data, dag=dag,)
 
-    
-    load_task = PythonOperator(
-        task_id=f'upload_{region_task_id}',
-        python_callable=upload_to_snowflake,
-        op_kwargs={'region': region},
-        dag=dag  
-    )
-
-    download_task >> unzip_task >> rename_task >> read_task  >> load_task
+transform_task = PythonOperator(task_id="transform_data",    python_callable=transform_data,  dag=dag,)
+load_task = PythonOperator(
+    task_id='upload_to_snowflake',
+    python_callable=upload_to_snowflake,
+    provide_context=True,
+    dag=dag  
+)
+download_task >> unzip_task >> rename_task >> read_task >> transform_task >> load_task
