@@ -67,33 +67,40 @@ def unzip_data(region, **kwargs):
         zip_ref.extractall(file_paths['extracted_dir'])
     print(f"Fichiers extraits pour {region} dans : {file_paths['extracted_dir']}")
 
+import pandas as pd
+import os
+
 def rename_xls_to_csv(region, **kwargs):
-    """Renomme le fichier .xls en .csv pour une région spécifique."""
+    """Lit le fichier .xls, sélectionne les colonnes souhaitées, sauvegarde en CSV.
+    Pour une région spécifique."""
 
     file_paths = get_region_file_paths(region)
     
     try:
-        if os.path.exists(file_paths['xls_file']):
-            os.rename(file_paths['xls_file'], file_paths['csv_file'])
-            print(f"Fichier renommé de {file_paths['xls_file']} à {file_paths['csv_file']}")
-        else:
+        if not os.path.exists(file_paths['xls_file']):
             raise FileNotFoundError(f"Le fichier {file_paths['xls_file']} n'a pas été trouvé.")
+        
+        # Lecture du fichier Excel avec pandas
+        df = pd.read_excel(file_paths['xls_file'], engine='openpyxl')  # ou xlrd selon version
+        
+        # Colonnes à garder (adapte selon ton fichier)
+        cols_to_keep = ['Périmètre', 'Nature', 'Date', 'Heures', 'Consommation',
+                        'Thermique', 'Eolien', 'Solaire', 'Hydraulique', 'Pompage']
+
+        # Vérifie que les colonnes existent dans le DataFrame
+        missing_cols = [col for col in cols_to_keep if col not in df.columns]
+        if missing_cols:
+            raise KeyError(f"Colonnes manquantes dans le fichier Excel: {missing_cols}")
+        
+        df = df[cols_to_keep]
+
+        # Sauvegarde en CSV avec le séparateur attendu (;)
+        df.to_csv(file_paths['csv_file'], sep='\t', index=False, encoding='ISO-8859-1')
+        
+        print(f"Fichier converti et sauvegardé en CSV : {file_paths['csv_file']}")
+
     except Exception as e:
         print(f"Une erreur est survenue : {e}")
-
-def read_data(region, **kwargs):
-    """Lit et affiche un aperçu des données pour une région spécifique."""
-    file_paths = get_region_file_paths(region)
-    
-    if not os.path.exists(file_paths['csv_file']):
-        raise FileNotFoundError(f"Aucun fichier CSV trouvé : {file_paths['csv_file']}")
-
-    try:
-        df = pd.read_csv(file_paths['csv_file'], encoding='ISO-8859-1', delimiter=';')
-        print(f"Aperçu des données pour {region}:")
-        print(df.head())
-    except Exception as e:
-        print(f"Erreur lors de la lecture du fichier CSV : {e}")
 
 
 def upload_to_snowflake(region, **kwargs):
