@@ -164,7 +164,7 @@ def upload_to_snowflake():
     COPY INTO eco2_data_test
     FROM @{stage_name}/final_test.csv
     FILE_FORMAT = (TYPE = 'CSV', SKIP_HEADER = 1, FIELD_DELIMITER = '\t', TRIM_SPACE = TRUE, 
-                   FIELD_OPTIONALLY_ENCLOSED_BY = '"', REPLACE_INVALID_CHARACTERS = TRUE)
+    FIELD_OPTIONALLY_ENCLOSED_BY = '"', REPLACE_INVALID_CHARACTERS = TRUE, error_on_column_count_mismatch=false)
     FORCE = TRUE
     ON_ERROR = 'CONTINUE';
     """
