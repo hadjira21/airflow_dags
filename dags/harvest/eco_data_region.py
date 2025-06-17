@@ -187,11 +187,11 @@ for region in REGIONS:
 
 
     
-    load_task = PythonOperator(
-        task_id=f'upload_{region_task_id}',
-        python_callable=upload_to_snowflake,
-        op_kwargs={'region': region},
-        dag=dag  
-    )
+    # load_task = PythonOperator(
+    #     task_id=f'upload_{region_task_id}',
+    #     python_callable=upload_to_snowflake,
+    #     op_kwargs={'region': region},
+    #     dag=dag  
+    # )
 
     download_task >> convert_to_csv 
