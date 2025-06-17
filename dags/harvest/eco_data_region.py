@@ -59,14 +59,13 @@ def transform_data():
         raise FileNotFoundError(f"Fichier CSV introuvable : {CSV_PATH}")
     try:
         df = pd.read_csv(CSV_PATH, encoding='ISO-8859-1', delimiter=';')
-        df.columns = [unidecode.unidecode(col.strip()) for col in df.columns]
-        for col in df.select_dtypes(include='object').columns:
-            df[col] = df[col].apply(lambda x: unidecode.unidecode(str(x)) if pd.notnull(x) else x)
-        df.to_csv(CSV_PATH, index=False, encoding='utf-8', sep='\t')  # séparateur tab pour éviter les erreurs
-        print("Fichier transformé avec accents supprimés.")
+        df.columns = [unidecode.unidecode(col.strip()).upper().replace(" ", "_").replace("-", "_") for col in df.columns]
+        df.to_csv(CSV_PATH, index=False, encoding='utf-8', sep='\t')  # tab delimiter pour Snowflake
+        print("Colonnes nettoyées et fichier transformé.")
     except Exception as e:
         print(f"Erreur transformation : {e}")
         raise
+
 
 def upload_to_snowflake():
     conn_params = {
@@ -83,48 +82,75 @@ def upload_to_snowflake():
 
     create_table_sql = """
     CREATE OR REPLACE TABLE eco2_data_test (
-        PERIMETRE VARCHAR,
-        NATURE VARCHAR,
-        DATE DATE,
-        HEURES TIME,
-        CONSOMMATION NUMBER,
-        PREVISION_J_1 NUMBER,
-        PREVISION_J NUMBER,
-        FIOUL NUMBER,
-        CHARBON NUMBER,
-        GAZ NUMBER,
-        NUCLEAIRE NUMBER,
-        EOLIEN NUMBER,
-        SOLAIRE NUMBER,
-        HYDRAULIQUE NUMBER,
-        POMPAGE NUMBER,
-        BIOENERGIES NUMBER,
-        ECH_PHYSIQUES NUMBER,
-        TAUX_DE_CO2 NUMBER,
-        ECH_COMM_ANGLETERRE NUMBER,
-        ECH_COMM_ESPAGNE NUMBER,
-        ECH_COMM_ITALIE NUMBER,
-        ECH_COMM_SUISSE NUMBER,
-        ECH_COMM_ALLEMAGNE_BELGIQUE NUMBER,
-        FIOUL_TAC NUMBER,
-        FIOUL_COGEN NUMBER,
-        FIOUL_AUTRES NUMBER,
-        GAZ_TAC NUMBER,
-        GAZ_COGEN NUMBER,
-        GAZ_CCG NUMBER,
-        GAZ_AUTRES NUMBER,
-        HYDRO_FDE NUMBER,
-        HYDRO_LACS NUMBER,
-        HYDRO_STEP NUMBER,
-        BIO_DECHETS NUMBER,
-        BIO_BIOMASSE NUMBER,
-        BIO_BIOGAZ NUMBER,
-        STOCKAGE_BATTERIE NUMBER,
-        DESTOCKAGE_BATTERIE NUMBER,
-        EOLIEN_TERRESTRE NUMBER,
-        EOLIEN_OFFSHORE NUMBER,
-        CONSOMMATION_CORRIGEE NUMBER
-    );
+    PERIMETRE VARCHAR,
+    NATURE VARCHAR,
+    DATE DATE,
+    HEURES TIME,
+    CONSOMMATION NUMBER,
+    THERMIQUE NUMBER,
+    NUCLEAIRE NUMBER,
+    EOLIEN NUMBER,
+    SOLAIRE NUMBER,
+    HYDRAULIQUE NUMBER,
+    POMPAGE NUMBER,
+    BIOENERGIES NUMBER,
+    STOCKAGE_BATTERIE NUMBER,
+    DESTOCKAGE_BATTERIE NUMBER,
+    EOLIEN_TERRESTRE NUMBER,
+    EOLIEN_OFFSHORE NUMBER,
+    ECH_PHYSIQUES NUMBER,
+    FLUX_AURA_TO_AURA NUMBER,
+    FLUX_BFC_TO_AURA NUMBER,
+    FLUX_BRETAGNE_TO_AURA NUMBER,
+    FLUX_CVL_TO_AURA NUMBER,
+    FLUX_GE_TO_AURA NUMBER,
+    FLUX_HDF_TO_AURA NUMBER,
+    FLUX_IDF_TO_AURA NUMBER,
+    FLUX_NORMANDIE_TO_AURA NUMBER,
+    FLUX_NAQ_TO_AURA NUMBER,
+    FLUX_OCCITANIE_TO_AURA NUMBER,
+    FLUX_PDL_TO_AURA NUMBER,
+    FLUX_PACA_TO_AURA NUMBER,
+    FLUX_AURA_FROM_AURA NUMBER,
+    FLUX_AURA_TO_BFC NUMBER,
+    FLUX_AURA_TO_BRETAGNE NUMBER,
+    FLUX_AURA_TO_CVL NUMBER,
+    FLUX_AURA_TO_GE NUMBER,
+    FLUX_AURA_TO_HDF NUMBER,
+    FLUX_AURA_TO_IDF NUMBER,
+    FLUX_AURA_TO_NORMANDIE NUMBER,
+    FLUX_AURA_TO_NAQ NUMBER,
+    FLUX_AURA_TO_OCCITANIE NUMBER,
+    FLUX_AURA_TO_PDL NUMBER,
+    FLUX_AURA_TO_PACA NUMBER,
+    FLUX_ALLEMAGNE_TO_AURA NUMBER,
+    FLUX_BELGIQUE_TO_AURA NUMBER,
+    FLUX_ESPAGNE_TO_AURA NUMBER,
+    FLUX_ITALIE_TO_AURA NUMBER,
+    FLUX_LUXEMBOURG_TO_AURA NUMBER,
+    FLUX_UK_TO_AURA NUMBER,
+    FLUX_SUISSE_TO_AURA NUMBER,
+    FLUX_AURA_TO_ALLEMAGNE NUMBER,
+    FLUX_AURA_TO_BELGIQUE NUMBER,
+    FLUX_AURA_TO_ESPAGNE NUMBER,
+    FLUX_AURA_TO_ITALIE NUMBER,
+    FLUX_AURA_TO_LUXEMBOURG NUMBER,
+    FLUX_AURA_TO_UK NUMBER,
+    FLUX_AURA_TO_SUISSE NUMBER,
+    TCO_THERMIQUE NUMBER,
+    TCH_THERMIQUE NUMBER,
+    TCO_NUCLEAIRE NUMBER,
+    TCH_NUCLEAIRE NUMBER,
+    TCO_EOLIEN NUMBER,
+    TCH_EOLIEN NUMBER,
+    TCO_SOLAIRE NUMBER,
+    TCH_SOLAIRE NUMBER,
+    TCO_HYDRAULIQUE NUMBER,
+    TCH_HYDRAULIQUE NUMBER,
+    TCO_BIOENERGIES NUMBER,
+    TCH_BIOENERGIES NUMBER
+);
+
     """
     snowflake_hook.run(create_table_sql)
     print("Table créée dans Snowflake.")
@@ -133,25 +159,29 @@ def upload_to_snowflake():
     snowflake_hook.run(put_command)
 
     copy_query = """
-    COPY INTO eco2_data_test
-    FROM (
-        SELECT $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
-               $11, $12, $13, $14, $15, $16, $17, $18, $19, $20,
-               $21, $22, $23, $24, $25, $26, $27, $28, $29, $30,
-               $31, $32, $33, $34, $35, $36, $37, $38, $39, $40,
-               $41
-        FROM @RTE_STAGE/eCO2mix_RTE_En-cours-TR.csv
-    )
-    FILE_FORMAT = (
-        TYPE = 'CSV',
-        SKIP_HEADER = 1,
-        FIELD_DELIMITER = '\t',
-        TRIM_SPACE = TRUE,
-        FIELD_OPTIONALLY_ENCLOSED_BY = '"',
-        REPLACE_INVALID_CHARACTERS = TRUE
-    )
-    FORCE = TRUE
-    ON_ERROR = 'CONTINUE';
+COPY INTO eco2_data_test
+FROM (
+    SELECT
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
+        $11, $12, $13, $14, $15, $16, $17, $18, $19, $20,
+        $21, $22, $23, $24, $25, $26, $27, $28, $29, $30,
+        $31, $32, $33, $34, $35, $36, $37, $38, $39, $40,
+        $41, $42, $43, $44, $45, $46, $47, $48, $49, $50,
+        $51, $52, $53, $54, $55, $56, $57, $58, $59, $60,
+        $61
+    FROM @RTE_STAGE/eCO2mix_RTE_En-cours-TR.csv
+)
+FILE_FORMAT = (
+    TYPE = 'CSV',
+    SKIP_HEADER = 1,
+    FIELD_DELIMITER = '\t',
+    TRIM_SPACE = TRUE,
+    FIELD_OPTIONALLY_ENCLOSED_BY = '"',
+    REPLACE_INVALID_CHARACTERS = TRUE
+)
+FORCE = TRUE
+ON_ERROR = 'CONTINUE';
+
     """
     snowflake_hook.run(copy_query)
     print("Données chargées dans Snowflake.")
