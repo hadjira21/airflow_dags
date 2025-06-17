@@ -105,7 +105,7 @@ def upload_to_snowflake():
         'account': 'TRMGRRV-JN45028',
         'warehouse': 'INGESTION_WH',
         'database': 'BRONZE',
-        'schema': "ENEDIS"
+        'schema': "METEO"
     }
     snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_conn', **conn_params)
     snowflake_hook.run(f"USE DATABASE {conn_params['database']}")
@@ -125,7 +125,7 @@ def upload_to_snowflake():
      
     );""")
 
-    stage_name = 'ENEDIS_STAGE'
+    stage_name = 'METEO_STAGE'
     put_command = f"PUT file://{CSV_FILE} @{stage_name}"
     snowflake_hook.run(put_command)
 
