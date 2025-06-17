@@ -93,6 +93,8 @@ def read_data(region, **kwargs):
     except Exception as e:
         print(f"Erreur lors de la lecture du fichier CSV : {e}")
 
+# upload_to_snowflake simplified - no CREATE TABLE
+
 def upload_to_snowflake(region, **kwargs):
     conn_params = {
         'user': 'HADJIRA25', 
@@ -112,52 +114,10 @@ def upload_to_snowflake(region, **kwargs):
     if not os.path.exists(file_paths['csv_file']):
         raise FileNotFoundError(f"Fichier CSV introuvable : {file_paths['csv_file']}")
 
-    df = pd.read_csv(file_paths['csv_file'], sep='\t', encoding='ISO-8859-1')  
-    df = df[['Périmètre', 'Nature', 'Date', 'Heures', 'Consommation', 'Thermique', 'Eolien', 'Solaire', 'Hydraulique', 'Pompage']]
-
-    dtype_mapping = {'object': 'VARCHAR',
-        'float64': 'FLOAT',
-        'int64': 'INT',
-        'bool': 'BOOLEAN',
-        'datetime64[ns]': 'TIMESTAMP'
-    }
-
-    columns_sql = []
-    for col in df.columns:
-        col_type = dtype_mapping.get(str(df[col].dtype), 'VARCHAR')
-        safe_col = col.replace(" ", "_").replace("-", "_").replace("é","e").replace("É","E").upper()
-        columns_sql.append(f'"{safe_col}" {col_type}')
-    
-    create_sql = f"""
-    CREATE OR REPLACE TABLE eco2_data_regional (
-        {', '.join(columns_sql)}
-    );
-    """
-
-    snowflake_hook.run(create_sql)
-    print("Table créée ou remplacée avec succès.")
-
-    stage_name = 'RTE_STAGE'
-    csv_file = file_paths['csv_file']
-    csv_filename = os.path.basename(csv_file)
-
-    put_command = f"PUT 'file://{csv_file}' @{stage_name} OVERWRITE = TRUE"
+    put_command = f"PUT 'file://{file_paths['csv_file']}' @RTE_STAGE OVERWRITE = TRUE"
     snowflake_hook.run(put_command)
-    print(f"Fichier chargé dans stage {stage_name}")
+    print(f"Fichier chargé dans stage RTE_STAGE")
 
-    nb_cols = len(df.columns)
-
-# Récupérer les colonnes existantes dans la table Snowflake
-    columns_query = """
-    SELECT COLUMN_NAME
-    FROM INFORMATION_SCHEMA.COLUMNS
-    WHERE TABLE_SCHEMA = 'RTE' AND TABLE_NAME = 'ECO2_DATA_REGIONAL'
-    ORDER BY ORDINAL_POSITION
-    """
-
-    columns = snowflake_hook.get_pandas_df(columns_query)['COLUMN_NAME'].tolist()
-
-    # Construire la requête COPY INTO avec ces colonnes
     copy_query = f"""
     COPY INTO eco2_data_regional (
         "PERIMÈTRE",
@@ -171,7 +131,7 @@ def upload_to_snowflake(region, **kwargs):
         "HYDRAULIQUE",
         "POMPAGE"
     )
-    FROM @RTE_STAGE/eCO2mix_RTE_Auvergne-Rhone-Alpes_En-cours-TR.csv
+    FROM @RTE_STAGE/{os.path.basename(file_paths['csv_file'])}
     FILE_FORMAT = (
         TYPE = 'CSV',
         SKIP_HEADER = 1,
@@ -182,14 +142,10 @@ def upload_to_snowflake(region, **kwargs):
     )
     FORCE = TRUE
     ON_ERROR = 'CONTINUE';
-
     """
     snowflake_hook.run(copy_query)
-
-
-
-    snowflake_hook.run(copy_query)
     print(f"Données pour {region} insérées avec succès dans Snowflake.")
+
 
 
 
