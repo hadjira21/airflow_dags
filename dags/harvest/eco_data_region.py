@@ -74,7 +74,7 @@ def upload_to_snowflake_combined():
         'account': 'TRMGRRV-JN45028',
         'warehouse': 'INGESTION_WH',
         'database': 'BRONZE',
-        'schema': "METEO"
+        'schema': "ATMOSUD"
     }
     snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_conn', **conn_params)
 
@@ -96,7 +96,7 @@ def upload_to_snowflake_combined():
     );
     """)
 
-    stage_name = 'METEO_STAGE'
+    stage_name = 'ATMOSUD_STAGE'
     snowflake_hook.run(f"PUT file://{CSV_FILE} @{stage_name}")
 
     snowflake_hook.run(f"""
