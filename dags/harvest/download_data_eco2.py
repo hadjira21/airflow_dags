@@ -92,7 +92,7 @@ def upload_to_snowflake():
     snowflake_hook.run(f"USE SCHEMA {conn_params['schema']}")
 
     create_table_sql = f"""
- CREATE OR REPLACE TABLE eco2_data (
+ CREATE OR REPLACE TABLE eco2_data_national (
     PERIMETRE VARCHAR,
     NATURE VARCHAR,
     DATE DATE,
@@ -144,7 +144,7 @@ def upload_to_snowflake():
     put_command = f"PUT file://{file_path} @{stage_name}"
     snowflake_hook.run(put_command)
     copy_query = f"""
-    COPY INTO eco2_data
+    COPY INTO eco2_data_national
     FROM (SELECT $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, 
     $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, $36, $37, $38, 
     $39, $40, $41 FROM @RTE_STAGE/eCO2mix_RTE_En-cours-TR.csv )

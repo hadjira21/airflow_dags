@@ -92,7 +92,7 @@ def upload_to_snowflake_combined():
     snowflake_hook.run(f"USE SCHEMA {conn_params['schema']}")
 
     snowflake_hook.run("""
-    CREATE OR REPLACE TABLE eco2_data_all (
+    CREATE OR REPLACE TABLE eco2_region_data(
         PERIMETRE VARCHAR,
         NATURE VARCHAR,
         DATE DATE,
@@ -112,7 +112,7 @@ def upload_to_snowflake_combined():
     snowflake_hook.run(f"PUT file://{CSV_FILE} @{stage_name}")
 
     snowflake_hook.run(f"""
-    COPY INTO eco2_data_all
+    COPY INTO eco2_region_data
     FROM @{stage_name}/eco2mix_combined.csv
     FILE_FORMAT = (TYPE = 'CSV', SKIP_HEADER = 1, FIELD_DELIMITER = '\t', TRIM_SPACE = TRUE,
     FIELD_OPTIONALLY_ENCLOSED_BY = '"', REPLACE_INVALID_CHARACTERS = TRUE, error_on_column_count_mismatch=false)
