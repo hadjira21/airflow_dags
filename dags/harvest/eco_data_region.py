@@ -273,4 +273,4 @@ for region in REGIONS:
         dag=dag  
     )
 
-    download_task # >> unzip_task >> rename_task >> read_task >> transform_task >> load_task
+    download_task >> unzip_task >> rename_task >> read_task >> transform_task #>> load_task
