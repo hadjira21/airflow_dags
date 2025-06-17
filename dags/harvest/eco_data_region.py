@@ -29,8 +29,7 @@ def get_region_file_paths(region):
     xls_file = os.path.join(extracted_dir, f"eCO2mix_RTE_{region}_En-cours-TR.xls")
     csv_file = os.path.join(extracted_dir, f"eCO2mix_RTE_{region}_En-cours-TR.csv")
     
-    return {
-        'zip_file': zip_file,
+    return {'zip_file': zip_file,
         'extracted_dir': extracted_dir,
         'xls_file': xls_file,
         'csv_file': csv_file
@@ -54,9 +53,19 @@ def download_data(region, **kwargs):
         raise Exception(f"Erreur lors du téléchargement pour {region}: {result.stderr}")
 
 # Modifiez de la même manière toutes les autres fonctions...
+def unzip_data(region, **kwargs):
+    file_paths = get_region_file_paths(region)
+
+    if not os.path.exists(file_paths['zip_file']):
+        raise FileNotFoundError(f"Le fichier ZIP n'existe pas : {file_paths['zip_file']}")
+
+    os.makedirs(file_paths['extracted_dir'], exist_ok=True)
+    with zipfile.ZipFile(file_paths['zip_file'], 'r') as zip_ref:
+        zip_ref.extractall(file_paths['extracted_dir'])
+    print(f"Fichiers extraits pour {region} dans : {file_paths['extracted_dir']}")
 
 def convert_xls_to_clean_csv(region, **kwargs):
-    """Convertit le fichier XLS en CSV propre avec colonnes sélectionnées."""
+
     file_paths = get_region_file_paths(region)
 
     if not os.path.exists(file_paths['xls_file']):
