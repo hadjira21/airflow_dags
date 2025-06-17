@@ -134,92 +134,83 @@ def upload_to_snowflake(region, **kwargs):
     print(df.columns)
     df = df[['Perimetre', 'Nature', 'Date', 'Heures', 'Consommation', 'Thermique',  'Eolien', 'Solaire', 'Hydraulique', 'Pompage']]
 
-    def map_dtype(dtype):
-        if pd.api.types.is_integer_dtype(dtype):
-            return "NUMBER"
-        elif pd.api.types.is_float_dtype(dtype):
-            return "FLOAT"
-        elif pd.api.types.is_datetime64_any_dtype(dtype):
-            return "TIMESTAMP"
-        else:
-            return "VARCHAR"
+    print(df.head())
 
-    def clean_column_name(name):
-        return name.upper() \
-                   .replace(" ", "_") \
-                   .replace("%", "") \
-                   .replace(".", "") \
-                   .replace("-", "_") \
-                   .replace("'", "") \
-                   .replace("É", "E") \
-                   .replace("è", "E") \
-                   .replace("é", "E") \
-                   .replace("à", "A") \
-                   .replace("ô", "O")
+    # dtype_mapping = {'object': 'VARCHAR', 'float64': 'FLOAT', 'int64': 'INT', 'bool': 'BOOLEAN',
+    #     'datetime64[ns]': 'TIMESTAMP' }
+    # columns_sql = []
+    # for col in df.columns:
+    #     col_type = dtype_mapping.get(str(df[col].dtype), 'VARCHAR')
+    #     safe_col = col.replace(" ", "_").replace("-", "_").upper()
+    #     columns_sql.append(f'"{safe_col}" {col_type}')
+    # create_sql = f'CREATE TABLE IF NOT EXISTS {table_name} ({", ".join(columns_sql)});'
 
-    cleaned_columns = [clean_column_name(col) for col in df.columns]
+    # try:
+    #     cursor.execute(create_sql)
+    #     print(f"Table `{table_name}` créée ou existante.")
+    # finally:
+    #     cursor.close()
+
     
-    columns_sql = ",\n    ".join(
-        [f'"{col}" {map_dtype(dtype)}'
-         for col, dtype in zip(cleaned_columns, df.dtypes)]
-    )
+    # columns_sql = ",\n    ".join(
+    #     [f'"{col}" {map_dtype(dtype)}'
+    #      for col, dtype in zip(cleaned_columns, df.dtypes)]
+    # )
 
-    create_sql = f"""
-    CREATE OR REPLACE TABLE eco2_data_regional (
-        REGION VARCHAR,
-        {columns_sql}
-    );
-    """
+    # create_sql = f"""
+    # CREATE OR REPLACE TABLE eco2_data_regional (
+    #     {columns_sql}
+    # );
+    # """
 
-    # 2. Connexion Snowflake
-    conn_params = {
-        'user': 'HADJIRA25', 
-        'password': '42XCDpmzwMKxRww', 
-        'account': 'TRMGRRV-JN45028',
-        'warehouse': 'INGESTION_WH', 
-        'database': 'BRONZE',  
-        'schema': 'RTE'
-    }
+    # conn_params = {
+    #     'user': 'HADJIRA25', 
+    #     'password': '42XCDpmzwMKxRww', 
+    #     'account': 'TRMGRRV-JN45028',
+    #     'warehouse': 'INGESTION_WH', 
+    #     'database': 'BRONZE',  
+    #     'schema': 'RTE'
+    # }
 
-    snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_conn', **conn_params)
-    snowflake_hook.run(f"USE DATABASE {conn_params['database']}")
-    snowflake_hook.run(f"USE SCHEMA {conn_params['schema']}")
+    # snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_conn', **conn_params)
+    # snowflake_hook.run(f"USE DATABASE {conn_params['database']}")
+    # snowflake_hook.run(f"USE SCHEMA {conn_params['schema']}")
 
-    # 3. Création de la table
-    snowflake_hook.run(create_sql)
+    # # 3. Création de la table
+    # snowflake_hook.run(create_sql)
 
-    # 4. Envoi du fichier dans le stage
-    stage_name = 'RTE_STAGE'
-    csv_file = file_paths['csv_file']
-    csv_filename = os.path.basename(csv_file)
-    put_command = f"PUT 'file://{csv_file}' @{stage_name} OVERWRITE = TRUE"
-    print(f"PUT: {put_command}")
-    snowflake_hook.run(put_command)
+    # # 4. Envoi du fichier dans le stage
+    # stage_name = 'RTE_STAGE'
+    # csv_file = file_paths['csv_file']
+    # csv_filename = os.path.basename(csv_file)
+    # put_command = f"PUT 'file://{csv_file}' @{stage_name} OVERWRITE = TRUE"
+    # print(f"PUT: {put_command}")
+    # snowflake_hook.run(put_command)
 
-    # 5. COPY INTO
-    nb_cols = len(df.columns)
-    select_expr = ", ".join([f"${i}" for i in range(1, nb_cols + 1)])
+    # # 5. COPY INTO
+    # nb_cols = len(df.columns)
+    # select_expr = ", ".join([f"${i}" for i in range(1, nb_cols + 1)])
 
-    copy_query = f"""
-    COPY INTO eco2_data_regional
-    FROM (
-        SELECT '{region}' AS REGION, {select_expr}
-        FROM @{stage_name}/{csv_filename}
-    )
-    FILE_FORMAT = (
-        TYPE = 'CSV',
-        SKIP_HEADER = 1,
-        FIELD_DELIMITER = ';',
-        TRIM_SPACE = TRUE,
-        FIELD_OPTIONALLY_ENCLOSED_BY = '"',
-        REPLACE_INVALID_CHARACTERS = TRUE
-    )
-    FORCE = TRUE
-    ON_ERROR = 'CONTINUE';
-    """
+    # copy_query = f"""
+    # COPY INTO eco2_data_regional
+    # FROM (
+    #     SELECT '{region}' AS REGION, {select_expr}
+    #     FROM @{stage_name}/{csv_filename}
+    # )
+    # FILE_FORMAT = (
+    #     TYPE = 'CSV',
+    #     SKIP_HEADER = 1,
+    #     FIELD_DELIMITER = ';',
+    #     TRIM_SPACE = TRUE,
+    #     FIELD_OPTIONALLY_ENCLOSED_BY = '"',
+    #     REPLACE_INVALID_CHARACTERS = TRUE
+    # )
+    # FORCE = TRUE
+    # ON_ERROR = 'CONTINUE';
+    # """
 
-    snowflake_hook.run(copy_query)
-    print(f"Données pour {region} insérées avec succès dans Snowflake.")
+    # snowflake_hook.run(copy_query)
+    # print(f"Données pour {region} insérées avec succès dans Snowflake.")
 
 default_args = {
     "owner": "airflow",
