@@ -22,7 +22,7 @@ CSV_FILE = os.path.join(EXTRACTED_DIR, f"{REGION}.csv")
 def download_data():
     """Télécharge le fichier ZIP depuis RTE."""
     os.makedirs(REGION_DIR, exist_ok=True)
-    url = "https://eco2mix.rte-france.com/download/eco2mix/eCO2mix_RTE_Auvergne-Rhone-Alpes_En-cours-TR.zip"
+    url = "https://eco2mix.rte-france.com/download/eco2mix/eCO2mix_RTE_Ile-de-France_En-cours-TR.zip"
     command = ["curl", "-L", "-o", ZIP_FILE, url]
     result = subprocess.run(command, capture_output=True, text=True)
 
