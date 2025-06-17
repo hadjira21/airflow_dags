@@ -10,7 +10,7 @@ import pandas as pd
 import unidecode 
 
 # Définition du dossier de stockage
-DATA_DIR = "/opt/airflow/data"
+DATA_DIR = "/opt/airflow/data/region"
 BASE_URL = "https://eco2mix.rte-france.com/download/eco2mix/"
 
 # Liste des régions à traiter
@@ -25,17 +25,17 @@ def get_region_file_paths(region):
     xls_file = os.path.join(extracted_dir, f"eCO2mix_RTE_{region}_En-cours-TR.xls")
     csv_file = os.path.join(extracted_dir, f"eCO2mix_RTE_{region}_En-cours-TR.csv")
     
-    return {
-        'zip_file': zip_file,
+    return {'zip_file': zip_file,
         'extracted_dir': extracted_dir,
         'xls_file': xls_file,
         'csv_file': csv_file
     }
 
 def download_data(region, **kwargs):
+    
     """Télécharge le fichier ZIP depuis RTE pour une région spécifique."""
     file_paths = get_region_file_paths(region)
-    os.makedirs(os.path.join(DATA_DIR, "region"), exist_ok=True)
+    os.makedirs(os.path.join(DATA_DIR), exist_ok=True)
     os.makedirs(file_paths['extracted_dir'], exist_ok=True)
     
     url = f"{BASE_URL}eCO2mix_RTE_{region}_En-cours-TR.zip"
@@ -80,83 +80,83 @@ def rename_xls_to_csv(region, **kwargs):
         print(f"Une erreur est survenue : {e}")
 
 
-def upload_to_snowflake(region, **kwargs):
-    conn_params = {
-        'user': 'HADJIRA25', 
-        'password': '42XCDpmzwMKxRww', 
-        'account': 'TRMGRRV-JN45028',
-        'warehouse': 'INGESTION_WH', 
-        'database': 'BRONZE',  
-        'schema': 'RTE'
-    }
-    snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_conn', **conn_params)
+# def upload_to_snowflake(region, **kwargs):
+#     conn_params = {
+#         'user': 'HADJIRA25', 
+#         'password': '42XCDpmzwMKxRww', 
+#         'account': 'TRMGRRV-JN45028',
+#         'warehouse': 'INGESTION_WH', 
+#         'database': 'BRONZE',  
+#         'schema': 'RTE'
+#     }
+#     snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_conn', **conn_params)
     
-    snowflake_hook.run(f"USE DATABASE {conn_params['database']}")
-    snowflake_hook.run(f"USE SCHEMA {conn_params['schema']}")
+#     snowflake_hook.run(f"USE DATABASE {conn_params['database']}")
+#     snowflake_hook.run(f"USE SCHEMA {conn_params['schema']}")
 
-    file_paths = get_region_file_paths(region)
+#     file_paths = get_region_file_paths(region)
     
-    if not os.path.exists(file_paths['csv_file']):
-        raise FileNotFoundError(f"Fichier CSV introuvable : {file_paths['csv_file']}")
+#     if not os.path.exists(file_paths['csv_file']):
+#         raise FileNotFoundError(f"Fichier CSV introuvable : {file_paths['csv_file']}")
 
-    # Lecture CSV avec encodage latin1 et séparateur ';'
-    df = pd.read_csv(file_paths['csv_file'], sep='\t', encoding='ISO-8859-1')
-    print(df.head())
-    df = df[['Périmètre', 'Nature', 'Date', 'Heures', 'Consommation', 'Thermique', 'Eolien', 'Solaire', 'Hydraulique', 'Pompage']]
-    print(df.head())
-    dtype_mapping = {
-        'object': 'VARCHAR',
-        'float64': 'FLOAT',
-        'int64': 'INT',
-        'bool': 'BOOLEAN',
-        'datetime64[ns]': 'TIMESTAMP'
-    }
+#     # Lecture CSV avec encodage latin1 et séparateur ';'
+#     df = pd.read_csv(file_paths['csv_file'], sep='\t', encoding='ISO-8859-1')
+#     print(df.head())
+#     df = df[['Périmètre', 'Nature', 'Date', 'Heures', 'Consommation', 'Thermique', 'Eolien', 'Solaire', 'Hydraulique', 'Pompage']]
+#     print(df.head())
+#     dtype_mapping = {
+#         'object': 'VARCHAR',
+#         'float64': 'FLOAT',
+#         'int64': 'INT',
+#         'bool': 'BOOLEAN',
+#         'datetime64[ns]': 'TIMESTAMP'
+#     }
 
-    columns_sql = []
-    for col in df.columns:
-        col_type = dtype_mapping.get(str(df[col].dtype), 'VARCHAR')
-        safe_col = col.replace(" ", "_").replace("-", "_").replace("é","e").replace("É","E").upper()
-        columns_sql.append(f'"{safe_col}" {col_type}')
+#     columns_sql = []
+#     for col in df.columns:
+#         col_type = dtype_mapping.get(str(df[col].dtype), 'VARCHAR')
+#         safe_col = col.replace(" ", "_").replace("-", "_").replace("é","e").replace("É","E").upper()
+#         columns_sql.append(f'"{safe_col}" {col_type}')
     
-    create_sql = f"""
-    CREATE OR REPLACE TABLE eco2_data_regional (
-        {', '.join(columns_sql)}
-    );
-    """
+#     create_sql = f"""
+#     CREATE OR REPLACE TABLE eco2_data_regional (
+#         {', '.join(columns_sql)}
+#     );
+#     """
 
-    snowflake_hook.run(create_sql)
-    print("Table créée ou remplacée avec succès.")
+#     snowflake_hook.run(create_sql)
+#     print("Table créée ou remplacée avec succès.")
 
-    # Upload fichier dans stage Snowflake
-    stage_name = 'RTE_STAGE'
-    csv_file = file_paths['csv_file']
-    csv_filename = os.path.basename(csv_file)
+#     # Upload fichier dans stage Snowflake
+#     stage_name = 'RTE_STAGE'
+#     csv_file = file_paths['csv_file']
+#     csv_filename = os.path.basename(csv_file)
 
-    put_command = f"PUT 'file://{csv_file}' @{stage_name} OVERWRITE = TRUE"
-    snowflake_hook.run(put_command)
-    print(f"Fichier chargé dans stage {stage_name}")
+#     put_command = f"PUT 'file://{csv_file}' @{stage_name} OVERWRITE = TRUE"
+#     snowflake_hook.run(put_command)
+#     print(f"Fichier chargé dans stage {stage_name}")
 
-    # COPY INTO sans colonne REGION car pas dans la table
-    nb_cols = len(df.columns)
-    select_expr = ", ".join([f"${i}" for i in range(1, nb_cols + 1)])
+#     # COPY INTO sans colonne REGION car pas dans la table
+#     nb_cols = len(df.columns)
+#     select_expr = ", ".join([f"${i}" for i in range(1, nb_cols + 1)])
 
-    copy_query = f"""
-    COPY INTO eco2_data_regional
-    FROM @{stage_name}/{csv_filename}
-    FILE_FORMAT = (
-        TYPE = 'CSV',
-        SKIP_HEADER = 1,
-        FIELD_DELIMITER = ';',
-        TRIM_SPACE = TRUE,
-        FIELD_OPTIONALLY_ENCLOSED_BY = '"',
-        REPLACE_INVALID_CHARACTERS = TRUE
-    )
-    FORCE = TRUE
-    ON_ERROR = 'CONTINUE';
-    """
+    # copy_query = f"""
+    # COPY INTO eco2_data_regional
+    # FROM @{stage_name}/{csv_filename}
+    # FILE_FORMAT = (
+    #     TYPE = 'CSV',
+    #     SKIP_HEADER = 1,
+    #     FIELD_DELIMITER = ';',
+    #     TRIM_SPACE = TRUE,
+    #     FIELD_OPTIONALLY_ENCLOSED_BY = '"',
+    #     REPLACE_INVALID_CHARACTERS = TRUE
+    # )
+    # FORCE = TRUE
+    # ON_ERROR = 'CONTINUE';
+    # """
 
-    snowflake_hook.run(copy_query)
-    print(f"Données pour {region} insérées avec succès dans Snowflake.")
+    # snowflake_hook.run(copy_query)
+    # print(f"Données pour {region} insérées avec succès dans Snowflake.")
 
 
 default_args = {
@@ -205,11 +205,11 @@ for region in REGIONS:
     # )
 
     
-    load_task = PythonOperator(
-        task_id=f'upload_{region_task_id}',
-        python_callable=upload_to_snowflake,
-        op_kwargs={'region': region},
-        dag=dag  
-    )
+    # load_task = PythonOperator(
+    #     task_id=f'upload_{region_task_id}',
+    #     python_callable=upload_to_snowflake,
+    #     op_kwargs={'region': region},
+    #     dag=dag  
+    # )
 
-    download_task >> unzip_task >> rename_task 
+    download_task #>> unzip_task >> rename_task 
