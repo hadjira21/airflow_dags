@@ -9,13 +9,11 @@ import zipfile
 import pandas as pd
 import unidecode
 
-# --- Constantes ---
 BASE_DIR = "/opt/airflow/data"
 REGIONS = [
     "Auvergne-Rhone-Alpes",
     "Bretagne",
     "Nouvelle-Aquitaine",
-    # ajoute les autres régions ici
 ]
 
 def get_paths(region):
@@ -210,5 +208,4 @@ for region in REGIONS:
         dag=dag,
     )
 
-    # Orchestration des tâches par région
     download_task >> unzip_task >> rename_task >> read_task >> transform_task >> upload_task
