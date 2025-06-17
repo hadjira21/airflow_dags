@@ -147,18 +147,23 @@ def upload_to_snowflake(region, **kwargs):
 
     nb_cols = len(df.columns)
 
+    columns_list = ['PERIMETRE', 'NATURE', 'DATE', 'HEURES', 'CONSOMMATION', 'THERMIQUE', 'EOLIEN', 'SOLAIRE', 'HYDRAULIQUE', 'POMPAGE']
+
     copy_query = f"""
-    COPY INTO eco2_data_regional
+    COPY INTO eco2_data_regional ({', '.join(columns_list)})
     FROM @{stage_name}/{csv_filename}
-    FILE_FORMAT = ( TYPE = 'CSV',
+    FILE_FORMAT = (
+        TYPE = 'CSV',
         SKIP_HEADER = 1,
         FIELD_DELIMITER = ';',
         TRIM_SPACE = TRUE,
         FIELD_OPTIONALLY_ENCLOSED_BY = '"',
-        REPLACE_INVALID_CHARACTERS = TRUE )
+        REPLACE_INVALID_CHARACTERS = TRUE
+    )
     FORCE = TRUE
     ON_ERROR = 'CONTINUE';
     """
+
 
     snowflake_hook.run(copy_query)
     print(f"Données pour {region} insérées avec succès dans Snowflake.")
