@@ -65,38 +65,22 @@ def unzip_data(region, **kwargs):
     print(f"Fichiers extraits pour {region} dans : {file_paths['extracted_dir']}")
 
 def convert_xls_to_clean_csv(region, **kwargs):
+    
     file_paths = get_region_file_paths(region)
 
-    # On liste les fichiers extraits
-    extracted_files = os.listdir(file_paths['extracted_dir'])
-    print(f"Fichiers dans {file_paths['extracted_dir']}: {extracted_files}")
+    if not os.path.exists(file_paths['xls_file']):
+        raise FileNotFoundError(f"Le fichier XLS n'existe pas : {file_paths['xls_file']}")
 
-    # Cherche fichier avec extension
-    xls_file = None
-    csv_file = None
-    for f in extracted_files:
-        if f.endswith('.xls'):
-            xls_file = os.path.join(file_paths['extracted_dir'], f)
-        elif f.endswith('.csv'):
-            csv_file = os.path.join(file_paths['extracted_dir'], f)
+    try:
+        # Lecture du fichier .xls
+        df = pd.read_excel(file_paths['xls_file'],  engine='openpyxl')
+                
+        df_clean = df[['Périmètre', 'Nature', 'Date', 'Heures', 'Consommation', 'Thermique', 'Eolien', 'Solaire','Hydraulique', 'Pompage']]
+        df_clean.to_csv(file_paths['csv_file'], sep=';', index=False, encoding='utf-8')
+        print(f"Fichier nettoyé sauvegardé en CSV : {file_paths['csv_file']}")
 
-    # Si fichier CSV existe, on le lit directement
-    if csv_file and os.path.exists(csv_file):
-        print(f"Lecture du CSV trouvé : {csv_file}")
-        df = pd.read_csv(csv_file, sep=';', encoding='utf-8')
-    elif xls_file and os.path.exists(xls_file):
-        print(f"Lecture du XLS trouvé : {xls_file}")
-        df = pd.read_excel(xls_file, engine='xlrd')
-    else:
-        raise FileNotFoundError("Aucun fichier .xls ni .csv trouvé dans le dossier extrait")
-
-    # Nettoyage colonnes
-    df_clean = df[['Périmètre', 'Nature', 'Date', 'Heures', 'Consommation', 'Thermique', 'Eolien', 'Solaire','Hydraulique', 'Pompage']]
-
-    # Sauvegarde CSV propre
-    df_clean.to_csv(file_paths['csv_file'], sep=';', index=False, encoding='utf-8')
-    print(f"Fichier nettoyé sauvegardé en CSV : {file_paths['csv_file']}")
-
+    except Exception as e:
+        print(f"Erreur lors de la conversion de {file_paths['xls_file']} : {e}")
 
 
 
