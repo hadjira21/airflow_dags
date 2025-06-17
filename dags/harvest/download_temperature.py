@@ -37,7 +37,7 @@ def upload_to_snowflake():
     snowflake_hook = SnowflakeHook( snowflake_conn_id='snowflake_conn', **conn_params)
     snowflake_hook.run(f"USE DATABASE {conn_params['database']}")
     snowflake_hook.run(f"USE SCHEMA {conn_params['schema']}")
-    create_table_sql = """CREATE TABLE IF NOT EXISTS temperature_data ( Horodate Date, Temp_realisee_lissee_C FLOAT, Temp_normale_lissee_C FLOAT,
+    create_table_sql = """CREATE TABLE IF NOT EXISTS temperature_data (Horodate Date, Temp_realisee_lissee_C FLOAT, Temp_normale_lissee_C FLOAT,
     Diff_Temp_Realisee_Normale_C FLOAT,  Pseudo_rayonnement FLOAT, Annee INT,Mois INT, Jour INT, Annee_Mois_Jour STRING); """
     snowflake_hook.run(create_table_sql)
     print("Table crée avec succès dans Snowflake.")
