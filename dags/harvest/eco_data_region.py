@@ -84,7 +84,7 @@ def upload_to_snowflake_combined():
         'account': 'TRMGRRV-JN45028',
         'warehouse': 'INGESTION_WH',
         'database': 'BRONZE',
-        'schema': "ATMOSUD"
+        'schema': "RTE"
     }
     snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_conn', **conn_params)
 
@@ -106,7 +106,7 @@ def upload_to_snowflake_combined():
     );
     """)
 
-    stage_name = 'ATMOSUD_STAGE'
+    stage_name = 'RTE_STAGE'
     snowflake_hook.run(f"REMOVE @{stage_name}/eco2mix_combined.csv")
 
     snowflake_hook.run(f"PUT file://{CSV_FILE} @{stage_name}")
@@ -121,7 +121,6 @@ def upload_to_snowflake_combined():
     """)
     print("Données combinées insérées dans Snowflake.")
 
-# --- DAG Airflow ---
 default_args = {
     "owner": "airflow",
     "start_date": datetime(2025, 3, 20),
