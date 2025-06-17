@@ -54,7 +54,7 @@ def read_data():
     if not os.path.exists(CSV_FILE):
         raise FileNotFoundError(f"Aucun fichier CSV trouvé : {CSV_FILE}")
 
-    df = pd.read_csv(CSV_FILE, encoding='ISO-8859-1', delimiter=';')
+    df = pd.read_csv(CSV_FILE, encoding='ISO-8859-1', delimiter='\t')
     print("Aperçu des données :")
     print(df.head())
 def transform_data():
@@ -62,7 +62,7 @@ def transform_data():
     if not os.path.exists(CSV_FILE):
         raise FileNotFoundError(f"Le fichier CSV est introuvable : {CSV_FILE}")
 
-    df = pd.read_csv(CSV_FILE, encoding='ISO-8859-1', delimiter=';')
+    df = pd.read_csv(CSV_FILE, encoding='ISO-8859-1', delimiter='\t')
 
     # Nettoyage des noms de colonnes
     df.columns = [unidecode.unidecode(col.strip()) for col in df.columns]
@@ -163,4 +163,4 @@ transform_task = PythonOperator(task_id="transform_data", python_callable=transf
 upload_task = PythonOperator(task_id="upload_to_snowflake", python_callable=upload_to_snowflake, dag=dag)
 
 # --- Orchestration ---
-download_task >> unzip_task  #>> rename_task >> read_task >> transform_task >> upload_task
+download_task >> unzip_task >> rename_task >> read_task >> transform_task >> upload_task
