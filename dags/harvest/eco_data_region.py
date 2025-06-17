@@ -93,7 +93,7 @@ def rename_xls_to_csv(region, **kwargs):
             raise KeyError(f"Colonnes manquantes dans le fichier Excel: {missing_cols}")
         
         df = df[cols_to_keep]
-
+        print(df.head)
         # Sauvegarde en CSV avec le séparateur attendu (;)
         df.to_csv(file_paths['csv_file'], sep='\t', index=False, encoding='ISO-8859-1')
         
@@ -235,4 +235,4 @@ for region in REGIONS:
         dag=dag  
     )
 
-    download_task >> unzip_task >> rename_task   >> load_task
+    download_task >> unzip_task >> rename_task 
