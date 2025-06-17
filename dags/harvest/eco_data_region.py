@@ -141,7 +141,6 @@ def upload_to_snowflake(region, **kwargs):
     # Création de la table si elle n'existe pas
     create_table_sql = """
     CREATE TABLE IF NOT EXISTS eco2_data_regional (
-        REGION VARCHAR,
         PERIMETRE VARCHAR,
         NATURE VARCHAR,
         DATE DATE,
@@ -192,7 +191,9 @@ def upload_to_snowflake(region, **kwargs):
     stage_name = 'RTE_STAGE'
     put_command = f"PUT 'file://{file_paths['csv_file']}' @{stage_name}"
     print(f"Exécution de la commande PUT: {put_command}")
-    snowflake_hook.run(put_command)
+    snowflake_hook.run(put_command) 
+
+    
     
     # Commande COPY avec le bon nom de fichier
     csv_filename = os.path.basename(file_paths['csv_file'])
@@ -200,7 +201,6 @@ def upload_to_snowflake(region, **kwargs):
     COPY INTO eco2_data_regional
     FROM (
         SELECT 
-            '{region}' as REGION,
             $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 
             $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, 
             $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, 
