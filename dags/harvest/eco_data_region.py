@@ -87,7 +87,8 @@ def read_data(region, **kwargs):
         raise FileNotFoundError(f"Aucun fichier CSV trouvé : {file_paths['csv_file']}")
 
     try:
-        df = pd.read_csv(file_paths['csv_file'], encoding='ISO-8859-1', delimiter=';')
+        df = pd.read_csv(file_paths['csv_file'], encoding='ISO-8859-1', delimiter='\t')
+        df = df[['Périmètre', 'Nature', 'Date', 'Heures', 'Consommation', 'Thermique', 'Eolien', 'Solaire', 'Hydraulique', 'Pompage']]
         print(f"Aperçu des données pour {region}:")
         print(df.head())
     except Exception as e:
@@ -116,7 +117,7 @@ def upload_to_snowflake(region, **kwargs):
     # Lecture CSV avec encodage latin1 et séparateur ';'
     df = pd.read_csv(file_paths['csv_file'], sep='\t', encoding='ISO-8859-1')
     print(df.head())
-    df = df[['Périmètre', 'Nature', 'Date', 'Heures', 'Consommation', 'Thermique', 'Eolien', 'Solaire', 'Hydraulique', 'Pompage']]
+    # df = df[['Périmètre', 'Nature', 'Date', 'Heures', 'Consommation', 'Thermique', 'Eolien', 'Solaire', 'Hydraulique', 'Pompage']]
     print(df.head())
     dtype_mapping = {
         'object': 'VARCHAR',
@@ -226,4 +227,4 @@ for region in REGIONS:
         dag=dag  
     )
 
-    download_task >> unzip_task >> rename_task >> read_task  >> load_task
+    download_task >> unzip_task >> rename_task >> read_task 
