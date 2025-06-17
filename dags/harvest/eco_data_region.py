@@ -9,7 +9,7 @@ import zipfile
 import pandas as pd
 import unidecode 
 
-# Définition du dossier de stockage
+
 DATA_DIR = "/opt/airflow/data/region"
 BASE_URL = "https://eco2mix.rte-france.com/download/eco2mix/"
 
@@ -119,107 +119,106 @@ def transform_data(region, **kwargs):
         print(f"Erreur pendant la transformation : {e}")
         raise
 
+
+
 def upload_to_snowflake(region, **kwargs):
-    """Charge les données dans Snowflake pour une région spécifique."""
-    file_paths = get_region_file_paths(region)   
+    """Charge les données CSV dans Snowflake pour une région spécifique en créant dynamiquement la table."""
+    
+    file_paths = get_region_file_paths(region)
+    
     if not os.path.exists(file_paths['csv_file']):
         raise FileNotFoundError(f"Fichier CSV introuvable : {file_paths['csv_file']}")
+
+    # 1. Lecture du CSV pour inférer le schéma
+    df = pd.read_csv(file_paths['csv_file'], sep=';', nrows=100)
+
+    def map_dtype(dtype):
+        if pd.api.types.is_integer_dtype(dtype):
+            return "NUMBER"
+        elif pd.api.types.is_float_dtype(dtype):
+            return "FLOAT"
+        elif pd.api.types.is_datetime64_any_dtype(dtype):
+            return "TIMESTAMP"
+        else:
+            return "VARCHAR"
+
+    def clean_column_name(name):
+        return name.upper() \
+                   .replace(" ", "_") \
+                   .replace("%", "") \
+                   .replace(".", "") \
+                   .replace("-", "_") \
+                   .replace("'", "") \
+                   .replace("É", "E") \
+                   .replace("è", "E") \
+                   .replace("é", "E") \
+                   .replace("à", "A") \
+                   .replace("ô", "O")
+
+    cleaned_columns = [clean_column_name(col) for col in df.columns]
     
+    columns_sql = ",\n    ".join(
+        [f'"{col}" {map_dtype(dtype)}'
+         for col, dtype in zip(cleaned_columns, df.dtypes)]
+    )
+
+    create_sql = f"""
+    CREATE OR REPLACE TABLE eco2_data_regional (
+        REGION VARCHAR,
+        {columns_sql}
+    );
+    """
+
+    # 2. Connexion Snowflake
     conn_params = {
         'user': 'HADJIRA25', 
         'password': '42XCDpmzwMKxRww', 
         'account': 'TRMGRRV-JN45028',
         'warehouse': 'INGESTION_WH', 
         'database': 'BRONZE',  
-        'schema': "RTE"
+        'schema': 'RTE'
     }
-    
+
     snowflake_hook = SnowflakeHook(snowflake_conn_id='snowflake_conn', **conn_params)
     snowflake_hook.run(f"USE DATABASE {conn_params['database']}")
     snowflake_hook.run(f"USE SCHEMA {conn_params['schema']}")
 
-    # Création de la table si elle n'existe pas
-    create_table_sql = """
-    CREATE TABLE IF NOT EXISTS eco2_data_regional (
-        PERIMETRE VARCHAR,
-        NATURE VARCHAR,
-        DATE DATE,
-        HEURES TIME,
-        CONSOMMATION NUMBER,
-        PREVISION_J_1 NUMBER,
-        PREVISION_J NUMBER,
-        FIOUL NUMBER,
-        CHARBON NUMBER,
-        GAZ NUMBER,
-        NUCLEAIRE NUMBER,
-        EOLIEN NUMBER,
-        SOLAIRE NUMBER,
-        HYDRAULIQUE NUMBER,
-        POMPAGE NUMBER,
-        BIOENERGIES NUMBER,
-        ECH_PHYSIQUES NUMBER,
-        TAUX_DE_CO2 NUMBER,
-        ECH_COMM_ANGLETERRE NUMBER,
-        ECH_COMM_ESPAGNE NUMBER,
-        ECH_COMM_ITALIE NUMBER,
-        ECH_COMM_SUISSE NUMBER,
-        ECH_COMM_ALLEMAGNE_BELGIQUE NUMBER,
-        FIOUL_TAC NUMBER,
-        FIOUL_COGEN NUMBER,
-        FIOUL_AUTRES NUMBER,
-        GAZ_TAC NUMBER,
-        GAZ_COGEN NUMBER,
-        GAZ_CCG NUMBER,
-        GAZ_AUTRES NUMBER,
-        HYDRO_FDE NUMBER,
-        HYDRO_LACS NUMBER,
-        HYDRO_STEP NUMBER,
-        BIO_DECHETS NUMBER,
-        BIO_BIOMASSE NUMBER,
-        BIO_BIOGAZ NUMBER,
-        STOCKAGE_BATTERIE NUMBER,
-        DESTOCKAGE_BATTERIE NUMBER,
-        EOLIEN_TERRESTRE NUMBER,
-        EOLIEN_OFFSHORE NUMBER,
-        CONSOMMATION_CORRIGEE NUMBER
-    );
-    """
-    
-    snowflake_hook.run(create_table_sql)
-    
-    # Utilisation du chemin absolu pour PUT
-    stage_name = 'RTE_STAGE'
-    put_command = f"PUT 'file://{file_paths['csv_file']}' @{stage_name}"
-    print(f"Exécution de la commande PUT: {put_command}")
-    snowflake_hook.run(put_command) 
+    # 3. Création de la table
+    snowflake_hook.run(create_sql)
 
-    
-    
-    # Commande COPY avec le bon nom de fichier
-    csv_filename = os.path.basename(file_paths['csv_file'])
+    # 4. Envoi du fichier dans le stage
+    stage_name = 'RTE_STAGE'
+    csv_file = file_paths['csv_file']
+    csv_filename = os.path.basename(csv_file)
+    put_command = f"PUT 'file://{csv_file}' @{stage_name} OVERWRITE = TRUE"
+    print(f"PUT: {put_command}")
+    snowflake_hook.run(put_command)
+
+    # 5. COPY INTO
+    nb_cols = len(df.columns)
+    select_expr = ", ".join([f"${i}" for i in range(1, nb_cols + 1)])
+
     copy_query = f"""
     COPY INTO eco2_data_regional
     FROM (
-        SELECT 
-            $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 
-            $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, 
-            $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, 
-            $31, $32, $33, $34, $35, $36, $37, $38, $39, $40
-        FROM @{stage_name}/{csv_filename})
+        SELECT '{region}' AS REGION, {select_expr}
+        FROM @{stage_name}/{csv_filename}
+    )
     FILE_FORMAT = (
-        TYPE = 'CSV', 
-        SKIP_HEADER = 1, 
-        FIELD_DELIMITER = ';', 
-        TRIM_SPACE = TRUE, 
-        FIELD_OPTIONALLY_ENCLOSED_BY = '"', 
+        TYPE = 'CSV',
+        SKIP_HEADER = 1,
+        FIELD_DELIMITER = ';',
+        TRIM_SPACE = TRUE,
+        FIELD_OPTIONALLY_ENCLOSED_BY = '"',
         REPLACE_INVALID_CHARACTERS = TRUE
     )
     FORCE = TRUE
     ON_ERROR = 'CONTINUE';
     """
-    
+
     snowflake_hook.run(copy_query)
     print(f"Données pour {region} insérées avec succès dans Snowflake.")
+
 default_args = {
     "owner": "airflow",
     "start_date": datetime(2025, 3, 20),
