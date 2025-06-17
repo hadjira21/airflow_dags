@@ -40,7 +40,7 @@ def download_data(region, **kwargs):
     file_paths = get_region_file_paths(region)
     
     # Crée le dossier region s'il n'existe pas
-    os.makedirs(os.path.join(DATA_DIR, "region"), exist_ok=True)
+    os.makedirs(os.path.join(DATA_DIR), exist_ok=True)
     os.makedirs(file_paths['extracted_dir'], exist_ok=True)
     
     url = f"{BASE_URL}eCO2mix_RTE_{region}_En-cours-TR.zip"
