@@ -120,7 +120,7 @@ def upload_to_snowflake(region, **kwargs):
 
     copy_query = f"""
     COPY INTO eco2_data_regional (
-        "PERIMÈTRE",
+        "PERIMETRE",
         "NATURE",
         "DATE",
         "HEURES",
