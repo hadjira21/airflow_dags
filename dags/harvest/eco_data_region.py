@@ -113,6 +113,7 @@ def transform_data(region, **kwargs):
             df[col] = df[col].apply(lambda x: unidecode.unidecode(str(x)) if pd.notnull(x) else x)
 
         df.to_csv(file_paths['csv_file'], index=False, encoding='utf-8', sep=';')
+        print(df.head())
         print(f"Fichier transformé avec accents supprimés pour {region}.")
     except Exception as e:
         print(f"Erreur pendant la transformation : {e}")
@@ -279,4 +280,4 @@ for region in REGIONS:
         dag=dag  
     )
 
-    download_task >> unzip_task >> rename_task >> read_task >> transform_task >> load_task
+    download_task >> unzip_task >> rename_task >> read_task >> transform_task 
