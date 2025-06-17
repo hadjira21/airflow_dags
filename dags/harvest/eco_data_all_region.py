@@ -11,7 +11,7 @@ import unidecode
 
 # --- Constantes de chemin ---
 BASE_DIR = "/opt/airflow/data"
-REGION = "final"
+REGION = "region_f"
 REGION_DIR = os.path.join(BASE_DIR, REGION)
 ZIP_FILE = os.path.join(REGION_DIR, f"{REGION}.zip")
 EXTRACTED_DIR = REGION_DIR
@@ -131,7 +131,7 @@ def upload_to_snowflake():
 
     copy_query = f"""
     COPY INTO eco2_data_test_v
-    FROM @{stage_name}/final.csv
+    FROM @{stage_name}/region_f.csv
     FILE_FORMAT = (TYPE = 'CSV', SKIP_HEADER = 1, FIELD_DELIMITER = '\t', TRIM_SPACE = TRUE, 
     FIELD_OPTIONALLY_ENCLOSED_BY = '"', REPLACE_INVALID_CHARACTERS = TRUE, error_on_column_count_mismatch=false)
     FORCE = TRUE
