@@ -118,8 +118,7 @@ def upload_to_snowflake(region, **kwargs):
     # Lecture CSV avec encodage latin1 et séparateur ';'
     df = pd.read_csv(file_paths['csv_file'], sep=';', encoding='ISO-8859-1')
     print(df.columns)
-    cols_to_keep = ['Périmètre', 'Nature', 'Date', 'Heures', 'Consommation', 'Thermique', 'Eolien', 'Solaire', 'Hydraulique', 'Pompage']
-    df = df[cols_to_keep]
+    df = df[['Périmètre', 'Nature', 'Date', 'Heures', 'Consommation', 'Thermique', 'Eolien', 'Solaire', 'Hydraulique', 'Pompage']]
     print(df.head())
     # dtype_mapping = {
     #     'object': 'VARCHAR',
