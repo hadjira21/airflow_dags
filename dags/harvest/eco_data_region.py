@@ -10,7 +10,7 @@ import pandas as pd
 import unidecode 
 
 # Définition du dossier de stockage
-DATA_DIR = "/opt/airflow/data"
+DATA_DIR = "/opt/airflow/data/region"
 BASE_URL = "https://eco2mix.rte-france.com/download/eco2mix/"
 
 # Liste des régions à traiter
