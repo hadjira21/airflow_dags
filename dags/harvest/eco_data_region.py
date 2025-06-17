@@ -22,9 +22,10 @@ REGIONS = [
 
 def get_region_file_paths(region):
     """Retourne les chemins de fichiers pour une région donnée"""
+    region_dir = os.path.join(DATA_DIR, "region") 
     zip_filename = f"eCO2mix_RTE_{region}_En-cours-TR.zip"
-    zip_file = os.path.join(DATA_DIR, zip_filename)
-    extracted_dir = os.path.join(DATA_DIR, f"eCO2mix_RTE_{region}_En-cours-TR")
+    zip_file = os.path.join(region_dir, zip_filename)
+    extracted_dir = os.path.join(region_dir, f"eCO2mix_RTE_{region}_En-cours-TR")
     xls_file = os.path.join(extracted_dir, f"eCO2mix_RTE_{region}_En-cours-TR.xls")
     csv_file = os.path.join(extracted_dir, f"eCO2mix_RTE_{region}_En-cours-TR.csv")
     
@@ -34,6 +35,7 @@ def get_region_file_paths(region):
         'xls_file': xls_file,
         'csv_file': csv_file
     }
+
 
 def download_data(region, **kwargs):
     """Télécharge le fichier ZIP depuis RTE pour une région spécifique."""
@@ -117,7 +119,9 @@ def transform_data(region, **kwargs):
 
 def upload_to_snowflake(region, **kwargs):
     """Charge les données dans Snowflake pour une région spécifique."""
-    file_paths = get_region_file_paths(region)
+    file_paths = get_region_file_paths(region)   
+    if not os.path.exists(file_paths['csv_file']):
+        raise FileNotFoundError(f"Fichier CSV introuvable : {file_paths['csv_file']}")
     
     conn_params = {
         'user': 'HADJIRA25', 
@@ -132,6 +136,7 @@ def upload_to_snowflake(region, **kwargs):
     snowflake_hook.run(f"USE DATABASE {conn_params['database']}")
     snowflake_hook.run(f"USE SCHEMA {conn_params['schema']}")
 
+    # Création de la table si elle n'existe pas
     create_table_sql = """
     CREATE TABLE IF NOT EXISTS eco2_data_regional (
         REGION VARCHAR,
@@ -180,13 +185,15 @@ def upload_to_snowflake(region, **kwargs):
     """
     
     snowflake_hook.run(create_table_sql)
-    print("Table vérifiée/créée avec succès dans Snowflake.")
     
+    # Utilisation du chemin absolu pour PUT
     stage_name = 'RTE_STAGE'
-    put_command = f"PUT file://{file_paths['csv_file']} @{stage_name}"
+    put_command = f"PUT 'file://{file_paths['csv_file']}' @{stage_name}"
+    print(f"Exécution de la commande PUT: {put_command}")
     snowflake_hook.run(put_command)
     
-    # Ajout de la région comme première colonne
+    # Commande COPY avec le bon nom de fichier
+    csv_filename = os.path.basename(file_paths['csv_file'])
     copy_query = f"""
     COPY INTO eco2_data_regional
     FROM (
@@ -196,20 +203,21 @@ def upload_to_snowflake(region, **kwargs):
             $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, 
             $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, 
             $31, $32, $33, $34, $35, $36, $37, $38, $39, $40
-        FROM @RTE_STAGE/{os.path.basename(file_paths['csv_file'])})
-    FILE_FORMAT = (TYPE = 'CSV', 
+        FROM @{stage_name}/{csv_filename})
+    FILE_FORMAT = (
+        TYPE = 'CSV', 
         SKIP_HEADER = 1, 
         FIELD_DELIMITER = ';', 
         TRIM_SPACE = TRUE, 
         FIELD_OPTIONALLY_ENCLOSED_BY = '"', 
-        REPLACE_INVALID_CHARACTERS = TRUE    )
+        REPLACE_INVALID_CHARACTERS = TRUE
+    )
     FORCE = TRUE
     ON_ERROR = 'CONTINUE';
     """
     
     snowflake_hook.run(copy_query)
     print(f"Données pour {region} insérées avec succès dans Snowflake.")
-
 default_args = {
     "owner": "airflow",
     "start_date": datetime(2025, 3, 20),
