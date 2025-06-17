@@ -21,7 +21,8 @@ REGIONS = [
 
 def get_region_file_paths(region):
     """Retourne les chemins de fichiers pour une région donnée"""
-    region_dir = os.path.join(DATA_DIR, "region") 
+    region_dir = DATA_DIR 
+
     zip_filename = f"eCO2mix_RTE_{region}_En-cours-TR.zip"
     zip_file = os.path.join(region_dir, zip_filename)
     extracted_dir = os.path.join(region_dir, f"eCO2mix_RTE_{region}_En-cours-TR")
@@ -34,6 +35,7 @@ def get_region_file_paths(region):
         'xls_file': xls_file,
         'csv_file': csv_file
     }
+
 
 def download_data(region, **kwargs):
     """Télécharge le fichier ZIP depuis RTE pour une région spécifique."""
