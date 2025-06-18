@@ -42,7 +42,7 @@ def upload_to_snowflake():
     df = pd.read_csv(CSV_FILE, encoding='utf-8', delimiter=';')
     hook = SnowflakeHook(snowflake_conn_id='snowflake_conn', **conn_params)
 
-    table_name = "temperature_data_test"
+    table_name = "temperature_data_region"
     stage_name = "METEO_STAGE"
 
     conn = hook.get_conn()
