@@ -69,7 +69,6 @@ def upload_to_snowflake():
     finally:
         cursor.close()
     hook.run(f"REMOVE @{stage_name}/temperature_regionale.csv")
-
     put_command = f"PUT file://{CSV_FILE} @{stage_name} OVERWRITE=TRUE"
     hook.run(put_command)
     print(f"Fichier {CSV_FILE} chargé dans le stage {stage_name}.")
