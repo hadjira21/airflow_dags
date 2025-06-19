@@ -11,7 +11,7 @@ CSV_FILE = os.path.join(DATA_DIR, "temperature_regionale.csv")
 
 def download_data():
     os.makedirs(DATA_DIR, exist_ok=True)
-    url = "https://odre.opendatasoft.com/api/explore/v2.1/catalog/datasets/temperature-quotidienne-regionale/exports/csv?lang=fr&timezone=Europe%2FBerlin&use_labels=true&delimiter=%3B"
+    url = "https://odre.opendatasoft.com/api/explore/v2.1/catalog/datasets/temperature-quotidienne-departementale/exports/csv?lang=fr&timezone=Europe%2FBerlin&use_labels=true&delimiter=%3B"
     command = ["curl", "-L", "-o", CSV_FILE, url]
     result = subprocess.run(command, capture_output=True, text=True)
     if result.returncode == 0:
