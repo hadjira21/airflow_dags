@@ -68,6 +68,7 @@ def upload_to_snowflake():
         print(f"Table `{table_name}` créée ou existante.")
     finally:
         cursor.close()
+    hook.run(f"REMOVE @{stage_name}/temperature_regionale.csv")
 
     put_command = f"PUT file://{CSV_FILE} @{stage_name} OVERWRITE=TRUE"
     hook.run(put_command)
