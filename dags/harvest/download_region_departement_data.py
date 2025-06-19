@@ -10,7 +10,7 @@ DATA_DIR = "/opt/airflow/data"
 CSV_FILE = os.path.join(DATA_DIR, "departements.csv")
 CSV_URL = "https://www.data.gouv.fr/fr/datasets/r/70cef74f-70b1-495a-8500-c089229c0254"
 TABLE_NAME = "departements_francais"
-STAGE_NAME = "ENEDIS_STAGE"
+STAGE_NAME = "INSEE_STAGE"
 
 def download_departements():
     os.makedirs(DATA_DIR, exist_ok=True)
@@ -34,8 +34,8 @@ def upload_departements_to_snowflake():
         'password': '42XCDpmzwMKxRww',
         'account': 'TRMGRRV-JN45028',
         'warehouse': 'INGESTION_WH',
-        'database': 'BRONZE',
-        'schema': 'ENEDIS'
+        'database': 'INSEE',
+        'schema': 'INSEE'
     }
 
     df = pd.read_csv(CSV_FILE, delimiter=',')
