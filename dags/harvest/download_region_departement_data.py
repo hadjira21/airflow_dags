@@ -8,7 +8,7 @@ from datetime import datetime
 
 DATA_DIR = "/opt/airflow/data"
 CSV_FILE = os.path.join(DATA_DIR, "departements.csv")
-CSV_URL = "https://static.data.gouv.fr/resources/departements-francais/20230101/departements-francais.csv"
+CSV_URL = "https://www.data.gouv.fr/fr/datasets/r/70cef74f-70b1-495a-8500-c089229c0254"
 TABLE_NAME = "departements_francais"
 STAGE_NAME = "BRONZE_STAGE"
 
